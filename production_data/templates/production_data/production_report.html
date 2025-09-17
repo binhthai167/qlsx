@@ -1,0 +1,302 @@
+{% extends 'production_data/base.html' %}
+{% block title %}Báo cáo & Thống kê Sản xuất{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="card-header">Báo cáo & Thống kê Sản xuất</h2>
+
+    <!-- Form lọc dữ liệu -->
+    <form method="GET" class="mb-4">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_start_date">Từ ngày:</label>
+                <input type="date" id="id_start_date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="form-group">
+                <label for="id_end_date">Đến ngày:</label>
+                <input type="date" id="id_end_date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Lọc Dữ liệu</button>
+        <a href="{% url 'production_report' %}" class="btn btn-secondary">Đặt lại</a>
+    </form>
+
+    <hr>
+
+    <h3>Tổng hợp Sản lượng</h3>
+    <div class="chart-container" style="position: relative; height:40vh; width:80vw; margin-bottom: 30px;">
+        <canvas id="productionSummaryChart"></canvas>
+    </div>
+
+    <!-- Nút chọn chế độ hiển thị -->
+    <div class="chart-filters">
+        <button id="btnProdByType" class="active">Theo Model</button>
+        <button id="btnProdByDate">Theo Ngày</button>
+        
+    </div>
+
+    <!-- Bảng theo Ngày (ẩn mặc định) -->
+    <div id="tableProdByDate" class="table-container mb-4 hidden">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th>PC Plan (Tổng)</th>
+                    <th>PRO Plan (Tổng)</th>
+                    <th>Result (Tổng)</th>
+                    <th>Chênh lệch PC (Tổng)</th>
+                    <th>Chênh lệch PRO (Tổng)</th>
+                    <th>Tỷ lệ thành tích(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in daily_production_summary %}
+                <tr>
+                    <td>{{ item.date|date:"d/m/Y" }}</td>
+                    <td>{{ item.total_pc_plan|default:0 }}</td>
+                    <td>{{ item.total_result|default:0 }}</td>
+                    <td>{{ item.total_pc_diff|default:0 }}</td>
+                    <td>{{ item.total_prod_diff|default:0 }}</td>
+                    <td>{{ item.total_prod_diff|default:0 }}</td>
+                    <td>{{ item.avg_completion_rate|floatformat:2 }}%</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">Không có dữ liệu.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bảng theo model (hiện mặc định) -->
+    <div id="tableProdByType" class="table-container mb-4">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Loại Sản phẩm</th>
+                    <th>PC Plan (Tổng)</th>
+                    <th>PRO Plan (Tổng)</th>
+                    <th>Result (Tổng)</th>
+                    <th>Chênh lệch PC (Tổng)</th>
+                    <th>Chênh lệch PRO (Tổng)</th>
+                    <th>Tỷ lệ thành tích(%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in production_by_type_summary %}
+                <tr>
+                    <td>{{ item.name_of_type }}</td>
+                    <td>{{ item.total_pc_plan|default:0 }}</td>
+                    <td>{{ item.total_pro_plan|default:0 }}</td>
+                    <td>{{ item.total_result|default:0 }}</td>
+                    <td>{{ item.total_pc_diff|default:0 }}</td>
+                    <td>{{ item.total_prod_diff|default:0 }}</td>
+                    <td>{{ item.total_completion_rate|default:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">Không có dữ liệu.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Chênh lệch Nhân sự</h3>
+    <div class="chart-container" style="position: relative; height:40vh; width:80vw;">
+        <canvas id="personDiffCombinedChart"></canvas>
+    </div>
+
+    <!-- Filter control -->
+    <div class="chart-filters">
+        <button id="btnByModel" class="active">Theo Model</button>
+        <button id="btnByDate">Theo Ngày</button>
+    </div>
+
+    <h3>Tổng cộng Toàn Bộ</h3>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tổng Kế hoạch PC</th>
+                    <th>Tổng Thực tế SX</th>
+                    <th>Tổng Chênh lệch SX</th>
+                    <th>Tổng Giờ Kế hoạch PC</th>
+                    <th>Tổng Giờ Thực tế SX</th>
+                    <th>Tổng Giờ Chênh lệch SX</th>
+                    <th>Tổng Ca 1</th>
+                    <th>Tổng Ca 2</th>
+                    <th>Tổng Ca 3</th>
+                    <th>Tổng OT</th>
+                    <th>Tổng Số người</th>
+                    <th>Tổng Chênh lệch người</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ grand_totals.overall_total_pc_plan|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_result|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_prod_diff|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_hour_pc_plan|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_hour_prod_result|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_hour_prod_diff|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_actual_shift_a|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_actual_shift_b|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_actual_shift_c|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_ot|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_total_actual|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_actual_diff|default:0 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dữ liệu từ Django context
+    const chartDates = JSON.parse('{{ chart_dates|safe }}');
+    const chartProdResults = JSON.parse('{{ chart_prod_results|safe }}');
+    const chartPcPlans = JSON.parse('{{ chart_pc_plans|safe }}');
+
+    const chartTypeLabels = JSON.parse('{{ chart_type_labels|safe }}');
+    const chartTypeProdResults = JSON.parse('{{ chart_type_prod_results|safe }}');
+    const chartTypePcPlans = JSON.parse('{{ chart_type_pc_plans|safe }}');
+
+    const modelLabels  = JSON.parse('{{ chart_model_labels|safe }}');
+    const modelPersonDiffs  = JSON.parse('{{ chart_model_person_diffs|safe }}');
+    const chartPersonDiffs = JSON.parse('{{ chart_person_diffs|safe }}');
+
+    // Chart sản lượng (mặc định theo Model)
+    const prodCtx = document.getElementById('productionSummaryChart').getContext('2d');
+    let prodChart = new Chart(prodCtx, {
+        type: 'bar',
+        data: {
+            labels: chartTypeLabels,
+            datasets: [
+                {
+                    label: 'Thực tế SX',
+                    data: chartTypeProdResults,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Kế hoạch PC',
+                    data: chartTypePcPlans,
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Sản lượng theo Model' } },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Số lượng' } },
+                x: { title: { display: true, text: 'Model' } }
+            }
+        }
+    });
+
+    // Cập nhật chart sản lượng
+    function updateProdChart(mode) {
+        if (mode === "date") {
+            prodChart.data.labels = chartDates;
+            prodChart.data.datasets[0].data = chartProdResults;
+            prodChart.data.datasets[1].data = chartPcPlans;
+            prodChart.options.plugins.title.text = "Sản lượng theo Ngày";
+            prodChart.options.scales.x.title.text = "Ngày";
+            document.getElementById("tableProdByDate").classList.remove("hidden");
+            document.getElementById("tableProdByType").classList.add("hidden");
+        } else {
+            prodChart.data.labels = chartTypeLabels;
+            prodChart.data.datasets[0].data = chartTypeProdResults;
+            prodChart.data.datasets[1].data = chartTypePcPlans;
+            prodChart.options.plugins.title.text = "Sản lượng theo Model";
+            prodChart.options.scales.x.title.text = "Model";
+            document.getElementById("tableProdByType").classList.remove("hidden");
+            document.getElementById("tableProdByDate").classList.add("hidden");
+        }
+        prodChart.update();
+    }
+
+    // Gán sự kiện cho nút sản lượng
+    document.getElementById("btnProdByDate").addEventListener("click", function() {
+        updateProdChart("date");
+        setActiveBtnProd("btnProdByDate");
+    });
+    document.getElementById("btnProdByType").addEventListener("click", function() {
+        updateProdChart("type");
+        setActiveBtnProd("btnProdByType");
+    });
+
+    function setActiveBtnProd(activeId) {
+        document.querySelectorAll("#btnProdByDate, #btnProdByType").forEach(btn => {
+            btn.classList.remove("active");
+        });
+        document.getElementById(activeId).classList.add("active");
+    }
+
+    // Chart nhân sự (mặc định theo Model)
+    const ctx = document.getElementById('personDiffCombinedChart').getContext('2d');
+    let personChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: modelLabels,
+            datasets: [{
+                label: 'Chênh lệch Nhân sự',
+                data: modelPersonDiffs,
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Chênh lệch Nhân sự theo Model' } },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Số người' } },
+                x: { title: { display: true, text: 'Model' } }
+            }
+        }
+    });
+
+    // Cập nhật chart nhân sự
+    function updatePersonChart(mode) {
+        if (mode === "model") {
+            personChart.data.labels = modelLabels;
+            personChart.data.datasets[0].data = modelPersonDiffs;
+            personChart.options.plugins.title.text = "Chênh lệch Nhân sự theo Model";
+            personChart.options.scales.x.title.text = "Model";
+        } else {
+            personChart.data.labels = chartDates;
+            personChart.data.datasets[0].data = chartPersonDiffs;
+            personChart.options.plugins.title.text = "Chênh lệch Nhân sự theo Ngày";
+            personChart.options.scales.x.title.text = "Ngày";
+        }
+        personChart.update();
+    }
+
+    // Gán sự kiện cho nút nhân sự
+    document.getElementById("btnByModel").addEventListener("click", function() {
+        updatePersonChart("model");
+        setActiveBtnPerson("btnByModel");
+    });
+    document.getElementById("btnByDate").addEventListener("click", function() {
+        updatePersonChart("date");
+        setActiveBtnPerson("btnByDate");
+    });
+
+    function setActiveBtnPerson(activeId) {
+        document.querySelectorAll("#btnByModel, #btnByDate").forEach(btn => {
+            btn.classList.remove("active");
+        });
+        document.getElementById(activeId).classList.add("active");
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'production_data/base.html' %}
+{% block title %}Chi tiết Kết quả Sản xuất{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="card-header">Chi tiết Kết quả Sản xuất</h2>
+
+    <div class="detail-item"><strong>Ngày:</strong> {{ result.date|date:"d/m/Y" }}</div>
+    <div class="detail-item"><strong>機種名NAME OF TYPE:</strong> {{ result.name_of_type }}</div>
+    <div class="detail-item"><strong>PC PLAN:</strong> {{ result.pc_plan }}</div>
+    <div class="detail-item"><strong>PRO PLAN:</strong> {{ result.pro_plan }}</div>
+    <div class="detail-item"><strong>RESULT:</strong> {{ result.result }}</div>
+    <div class="detail-item"><strong>PC 差異:</strong> {{ result.pc_diff|default:"N/A" }}</div>
+    <div class="detail-item"><strong>PROD 差異:</strong> {{ result.prod_diff|default:"N/A" }}</div>
+    <div class="detail-item"><strong>達成率(%):</strong> {{ result.completion_rate|floatformat:2|default:"N/A" }}%</div>
+    <div class="detail-item"><strong>HOUR PC PLAN:</strong> {{ result.hour_pc_plan|floatformat:2 }}</div>
+    <div class="detail-item"><strong>HOUR PRO PLAN:</strong> {{ result.hour_pro_plan|floatformat:2 }}</div>
+    <div class="detail-item"><strong>HOUR:</strong> {{ result.hour_actual|floatformat:2 }}</div>
+    <div class="detail-item"><strong>QTY/HOUR:</strong> {{ result.qty_hour }}</div>
+    <div class="detail-item"><strong>PC PLAN-REF 26 (total):</strong> {{ result.p_plan_ref }}</div>
+    <div class="detail-item"><strong>PC PLAN REF 26:</strong> {{ result.pc_plan_ref_2 }}</div>
+    <div class="detail-item"><strong>実績RSLT:</strong> {{ result.actuals }}</div>
+    <div class="detail-item"><strong>BLANCE:</strong> {{ result.difference|default:"N/A" }}</div>
+    <div class="detail-item"><strong>INPUT:</strong> {{ result.input_material }}</div>
+    <div class="detail-item"><strong>OUTPUT AFTER:</strong> {{ result.output }}</div>
+    <div class="detail-item"><strong>OUTPUT BEFORE:</strong> {{ result.output_before }}</div>
+    <div class="detail-item"><strong>NG:</strong> {{ result.ng }}</div>
+    <div class="detail-item"><strong>INPUT THUC TE:</strong> {{ result.input_actual }}</div>
+    <div class="detail-item"><strong>Chuẩn Người:</strong> {{ result.person_standard }}</div>
+    <div class="detail-item"><strong>Thực tế:</strong> {{ result.person_actual }}</div>
+    <div class="detail-item"><strong>Sai Biệt:</strong> {{ result.person_diff }}</div>
+
+    <hr>
+    <div class="detail-item"><strong>Ngày tạo:</strong> {{ result.created_at|date:"d/m/Y H:i" }}</div>
+    <div class="detail-item"><strong>Cập nhật cuối:</strong> {{ result.updated_at|date:"d/m/Y H:i" }}</div>
+
+    <div class="button-group">
+        <a href="{% url 'production_result_update' pk=result.pk %}" class="btn btn-primary">Sửa</a>
+        <a href="{% url 'production_results_list' %}" class="btn btn-secondary">Quay lại danh sách</a>
+    </div>
+</div>
+{% endblock %}

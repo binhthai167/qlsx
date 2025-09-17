@@ -1,0 +1,166 @@
+{% extends 'production_data/base.html' %}
+{% block title %}Nhập liệu Sản xuất{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="card-header">Nhập liệu Kết quả Sản xuất</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Thông tin chung -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.date.id_for_label }}">Ngày:</label>
+                {{ form.date }}
+                {% if form.date.errors %}<ul class="errorlist">{{ form.date.errors }}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.user_input.id_for_label }}">Người nhập liệu:</label>
+                {{ form.user_input }}
+                {% if form.user_input.errors %}<ul class="errorlist">{{ form.user_input.errors }}</ul>{% endif %}
+            </div>
+        </div>
+
+        <!-- Máy loại -->
+        <div class="card">
+            <h3 class="card-header">機種名 NAME OF TYPE</h3>
+            <div class="form-group">
+                <label for="{{ form.name_of_type.id_for_label }}">Mã sản phẩm:</label>
+                {{ form.name_of_type }}
+                {% if form.name_of_type.errors %}<ul class="errorlist">{{ form.name_of_type.errors }}</ul>{% endif %}
+            </div>
+        </div>
+
+        <!-- Kế hoạch & Thực tế -->
+        <div class="card">
+            <h3 class="card-header">前日計画／実績 (Yesterday PLN/RSLT)</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.pc_plan.id_for_label }}">PC PLAN:</label>
+                    {{ form.pc_plan }}
+                    {% if form.pc_plan.errors %}<ul class="errorlist">{{ form.pc_plan.errors }}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.pro_plan.id_for_label }}">PRO PLAN:</label>
+                    {{ form.pro_plan }}
+                    {% if form.pro_plan.errors %}<ul class="errorlist">{{ form.pro_plan.errors }}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.result.id_for_label }}">RESULT:</label>
+                    {{ form.result }}
+                    {% if form.result.errors %}<ul class="errorlist">{{ form.result.errors }}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.pc_diff.id_for_label }}">PC 差異:</label>
+                    {{ form.pc_diff }}
+                    {% if form.pc_diff.errors %}<ul class="errorlist">{{ form.pc_diff.errors }}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.prod_diff.id_for_label }}">PROD 差異:</label>
+                    {{ form.prod_diff }}
+                    {% if form.prod_diff.errors %}<ul class="errorlist">{{ form.prod_diff.errors }}</ul>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Giờ làm việc -->
+        <div class="card">
+            <h3 class="card-header">Giờ làm việc</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.hour_pc_plan.id_for_label }}">HOUR PC PLAN:</label>
+                    {{ form.hour_pc_plan }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.hour_pro_plan.id_for_label }}">HOUR PRO PLAN:</label>
+                    {{ form.hour_pro_plan }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.hour_actual.id_for_label }}">HOUR (Actual):</label>
+                    {{ form.hour_actual }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.qty_hour.id_for_label }}">QTY/HOUR:</label>
+                    {{ form.qty_hour }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Lũy kế -->
+        <div class="card">
+            <h3 class="card-header">累積数量(ACC QTY.)</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.po_plan_ref.id_for_label }}">PC PLAN-REF 26 (Total):</label>
+                    {{ form.po_plan_ref }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.pc_plan_ref_2.id_for_label }}">PC PLAN REF 26:</label>
+                    {{ form.pc_plan_ref_2 }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.actuals.id_for_label }}">Kết quả (Actuals):</label>
+                    {{ form.actuals }}
+                </div>
+            </div>
+        </div>
+
+        <!-- // input out put -->
+        <div class="card">
+            <h3 class="card-header">Input OUTPUT</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.po_plan_ref.id_for_label }}">INPUT:</label>
+                    {{ form.input_material }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.pc_plan_ref_2.id_for_label }}">OUTPUT AFTER:</label>
+                    {{ form.output }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.actuals.id_for_label }}">OUTPUT Before:</label>
+                    {{ form.output_before }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.actuals.id_for_label }}">NG</label>
+                    {{ form.ng }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.actuals.id_for_label }}">INPUT Thực tế</label>
+                    {{ form.input_actual }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Số người -->
+        <div class="card">
+            <h3 class="card-header">Số người 工数</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.person_standard.id_for_label }}">Chuẩn Người:</label>
+                    {{ form.person_standard }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.person_actual.id_for_label }}">Thực tế:</label>
+                    {{ form.person_actual }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút -->
+        <div class="button-group">
+            <button type="submit" class="btn btn-primary">Lưu dữ liệu</button>
+            {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul>
+            {% for field, errors in form.errors.items %}
+                <li><strong>{{ field }}</strong>: {{ errors|join:", " }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+            {% endif %}
+            <button type="reset" class="btn btn-secondary">Hủy bỏ</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

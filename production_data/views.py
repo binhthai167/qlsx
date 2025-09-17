@@ -1,0 +1,206 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages # Để hiển thị thông báo thành công/lỗi
+from .forms import ProductionResultForm
+from .models import ProductionResult
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField # Để tính tổng và tham chiếu trường
+from django.utils import timezone
+import json
+from django.db.models import Sum,IntegerField
+from django.db.models.functions import Cast
+from django.db.models.functions import Coalesce
+from datetime import timedelta # Để tính toán ngày
+from django.db.models import Count
+from django.db.models.functions import NullIf
+
+def data_entry_view(request):
+    if request.method == 'POST':
+        form = ProductionResultForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Dữ liệu đã được nhập thành công!')
+            return redirect('data_entry') # Chuyển hướng về trang nhập liệu sau khi lưu
+        else:
+            messages.error(request, 'Có lỗi xảy ra khi nhập liệu. Vui lòng kiểm tra lại.')
+    else:
+        # Nếu muốn hiển thị ngày hiện tại tự động
+        initial_data = {'date': timezone.now().strftime('%Y-%m-%d')}
+        form = ProductionResultForm(initial=initial_data)
+
+    context = {
+        'form': form,
+        'current_page': 'entry' # Để active menu item
+    }
+    return render(request, 'production_data/data_entry.html', context)
+
+def production_results_list(request):
+    # Lấy tất cả kết quả, sắp xếp theo ngày giảm dần và tên loại tăng dần
+    results = ProductionResult.objects.all().order_by('-date', 'name_of_type')
+
+    # Tính tổng cho các cột cần thiết, ví dụ:
+    # totals = results.aggregate(
+    #     total_pc_plan=Sum('pc_plan'),
+    #     total_result=Sum('result'),
+    #     total_prod_diff=Sum('prod_diff'),
+    #     total_hour_pc_plan=Sum('hour_pc_plan'),
+    #     # ... thêm các tổng khác
+    # )
+
+    context = {
+        'results': results,
+        # 'totals': totals,
+        'current_page': 'list' # Để active menu item
+    }
+    return render(request, 'production_data/production_results_list.html', context)
+
+def production_result_detail(request, pk):
+    result = get_object_or_404(ProductionResult, pk=pk)
+    context = {
+        'result': result,
+        'current_page': 'list'
+    }
+    return render(request, 'production_data/production_result_detail.html', context)
+
+def production_result_update(request, pk):
+    result = get_object_or_404(ProductionResult, pk=pk)
+    if request.method == 'POST':
+        form = ProductionResultForm(request.POST, instance=result)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Dữ liệu đã được cập nhật thành công!')
+            return redirect('production_results_list')
+        else:
+            messages.error(request, 'Có lỗi xảy ra khi cập nhật dữ liệu. Vui lòng kiểm tra lại.')
+    else:
+        form = ProductionResultForm(instance=result)
+
+    context = {
+        'form': form,
+        'result': result,
+        'current_page': 'list'
+    }
+    return render(request, 'production_data/data_entry.html', context) # Dùng lại template nhập liệu
+
+def production_result_delete(request, pk):
+    result = get_object_or_404(ProductionResult, pk=pk)
+    if request.method == 'POST':
+        result.delete()
+        messages.success(request, 'Dữ liệu đã được xóa thành công!')
+        return redirect('production_results_list')
+    context = {
+        'result': result,
+        'current_page': 'list'
+    }
+    return render(request, 'production_data/production_result_confirm_delete.html', context)
+
+# Các view cho báo cáo và thống kê có thể phát triển thêm
+# View cho báo cáo và thống kê đã được mở rộng
+def production_report(request):
+    # Lấy các tham số lọc từ request
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    # Xử lý ngày lọc
+    today = timezone.now().date()
+    # Mặc định là 7 ngày gần nhất nếu không có ngày lọc
+    default_start_date = today - timedelta(days=6) # 7 ngày bao gồm hôm nay
+    default_end_date = today
+
+    try:
+        start_date = timezone.datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else default_start_date
+        end_date = timezone.datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else default_end_date
+    except ValueError:
+        messages.error(request, 'Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD.')
+        start_date = default_start_date
+        end_date = default_end_date
+
+    # Đảm bảo ngày bắt đầu không lớn hơn ngày kết thúc
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date # Hoán đổi nếu không hợp lệ
+        messages.warning(request, 'Ngày bắt đầu không được lớn hơn ngày kết thúc. Đã điều chỉnh.')
+
+
+    # Lọc dữ liệu theo khoảng ngày
+    filtered_results = ProductionResult.objects.filter(date__range=[start_date, end_date]).order_by('date', 'name_of_type')
+
+    # Báo cáo tổng sản lượng theo ngày (cho biểu đồ đường hoặc cột)
+    daily_production_summary = filtered_results.values('date').annotate(
+        total_result=Sum('result'),
+        total_pc_plan=Sum('pc_plan'),
+        total_pc_diff=Sum('pc_diff'),
+        total_prod_diff=Sum('prod_diff'),
+        total_person_diff=Sum('person_diff', output_field=IntegerField()),
+        avg_completion_rate=ExpressionWrapper(
+            Coalesce(Sum('completion_rate') / NullIf(Count('id'), 0), 0),
+            output_field=DecimalField(max_digits=5, decimal_places=2)
+        )
+    ).order_by('date')
+
+    person_diff_by_model = filtered_results.values('name_of_type').annotate(
+    total_person_diff=Sum('person_diff', output_field=IntegerField())
+    ).order_by('name_of_type')
+
+    # Chuyển đổi dữ liệu cho Chart.js
+    dates = [item['date'].strftime('%Y-%m-%d') for item in daily_production_summary]
+    prod_results = [item['total_result'] for item in daily_production_summary]
+    pc_plans = [item['total_pc_plan'] for item in daily_production_summary]
+    model_labels = [item['name_of_type'] for item in person_diff_by_model]
+    model_person_diffs = [item['total_person_diff'] for item in person_diff_by_model]
+
+    # Báo cáo tổng sản lượng theo loại sản phẩm (cho biểu đồ cột hoặc bánh)
+    production_by_type_summary = filtered_results.values('name_of_type').annotate(
+        total_pc_plan=Sum('pc_plan'),
+        total_pro_plan=Sum('pro_plan'),
+        total_result=Sum('result'),
+        total_pc_diff=Sum('pc_diff'),
+        total_prod_diff=Sum('prod_diff'),
+        total_completion_rate=Sum('completion_rate'),
+        total_person_diff=Sum('person_diff', output_field=IntegerField())
+    ).order_by('name_of_type')
+
+
+    # Tính tổng cho bảng tóm tắt
+    grand_totals = filtered_results.aggregate(
+        overall_total_pc_plan=Sum('pc_plan'),
+        overall_total_result=Sum('result'),
+        overall_total_prod_diff=Sum('prod_diff'),
+        overall_total_hour_pc_plan=Sum('hour_pc_plan'),
+        overall_total_hour_prod_plan=Sum('hour_pro_plan'),
+        overall_total_hour_prod_diff=Sum(
+        ExpressionWrapper(F('hour_actual') - F('hour_pro_plan'), output_field=DecimalField())
+    ),
+        # overall_total_actual_shift_a=Sum('actual_shift_a'),
+        # overall_total_actual_shift_b=Sum('actual_shift_b'),
+        # overall_total_actual_shift_c=Sum('actual_shift_c'),
+        # overall_total_ot=Sum('ot'),
+        # overall_total_total_actual=Sum('total_actual'),
+        # overall_total_actual_diff=Sum('actual_diff'),
+    )
+
+
+        # Dữ liệu cho biểu đồ tổng sản lượng theo loại
+    type_labels = [item['name_of_type'] for item in production_by_type_summary]
+    type_prod_results = [item['total_result'] for item in production_by_type_summary]
+    type_pc_plans = [item['total_pc_plan'] for item in production_by_type_summary]
+    person_diffs = [item['total_person_diff'] for item in daily_production_summary]
+
+
+    context = {
+        'current_page': 'report',
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'daily_production_summary': daily_production_summary, # Bảng chi tiết
+        'production_by_type_summary': production_by_type_summary, # Bảng chi tiết theo loại
+        'grand_totals': grand_totals,
+
+        # Dữ liệu cho Chart.js
+        'chart_dates': json.dumps(dates),
+        'chart_prod_results': json.dumps(prod_results),
+        'chart_pc_plans': json.dumps(pc_plans),
+        'chart_type_labels': json.dumps(type_labels),
+        'chart_type_prod_results': json.dumps(type_prod_results),
+        'chart_type_pc_plans': json.dumps(type_pc_plans),
+        'chart_person_diffs': json.dumps(person_diffs),
+        'chart_model_labels': json.dumps(model_labels),
+        'chart_model_person_diffs': json.dumps(model_person_diffs),
+    }
+    return render(request, 'production_data/production_report.html', context)

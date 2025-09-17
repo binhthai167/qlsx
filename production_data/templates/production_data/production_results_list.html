@@ -1,0 +1,83 @@
+{% extends 'production_data/base.html' %}
+{% block title %}Danh sách Kết quả Sản xuất{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2 class="card-header">Danh sách Kết quả Sản xuất</h2>
+        {% if results %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>機種名NAME OF TYPE</th>
+                            <th>PC PLAN</th>
+                            <th>PRO PLAN</th>
+                            <th>RESULT</th>
+                            <th>PC 差異</th>
+                            <th>PROD 差異</th>
+                            <th>達成率(%)</th>
+                            <th>HOUR PC PLAN</th>
+                            <th>HOUR PRO PLAN</th>
+                            <th>HOUR</th>
+                            <th>QTY/HOUR</th>
+                            <th>PC PLAN-REF 26 (total)</th>
+                            <th>PC PLAN REF 26</th>
+                            <th>実績RSLT</th>
+                            <th>BLANCE</th>
+                            <th>INPUT</th>
+                            <th>OUTPUT AFTER</th>
+                            <th>OUTPUT BEFORE</th>
+                            <th>NG</th>
+                            <th>INPUT THUC TE</th>
+                            <th>Chuẩn Người</th>
+                            <th>Thực tế</th>
+                            <th>Sai Biệt</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td>{{ result.date|date:"d/m/Y" }}</td>
+                                <td>{{ result.name_of_type }}</td>
+                                <td>{{ result.pc_plan }}</td>
+                                <td>{{ result.pro_plan }}</td>
+                                <td>{{ result.result }}</td>
+                                <td>{{ result.pc_diff|default:"N/A" }}</td>
+                                <td>{{ result.prod_diff|default:"N/A" }}</td>
+                                <td>{{ result.completion_rate|floatformat:2|default:"N/A" }}%</td>
+                                <td>{{ result.hour_pc_plan|floatformat:2 }}</td>
+                                <td>{{ result.hour_pro_plan|floatformat:2 }}</td>
+                                <td>{{ result.hour_actual|floatformat:2 }}</td>
+                                <td>{{ result.qty_hour }}</td>
+                                <td>{{ result.po_plan_ref }}</td>
+                                <td>{{ result.pc_plan_ref_2 }}</td>
+                                <td>{{ result.actuals }}</td>
+                                <td>{{ result.difference|default:"N/A" }}</td>
+                                <td>{{ result.input_material }}</td>
+                                <td>{{ result.output }}</td>
+                                <td>{{ result.output_before }}</td>
+                                <td>{{ result.ng }}</td>
+                                <td>{{ result.input_actual }}</td>
+                                <td>{{ result.person_standard }}</td>
+                                <td>{{ result.person_actual }}</td>
+                                <td>{{ result.person_diff }}</td>
+    <td class="table-actions">
+    <a href="{% url 'production_result_detail' pk=result.pk %}" 
+       class="action-link text-info" title="Xem">👁️</a>
+    <a href="{% url 'production_result_update' pk=result.pk %}" 
+       class="action-link text-primary" title="Sửa">✏️</a>
+    <a href="{% url 'production_result_delete' pk=result.pk %}" 
+       class="action-link text-danger" title="Xóa">🗑️</a>
+</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>Chưa có dữ liệu sản xuất nào được nhập.</p>
+        {% endif %}
+    </div>
+{% endblock %}

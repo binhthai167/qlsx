@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hệ thống Quản Lí dây chuyền Sản xuất{% endblock %}</title>
+    <!-- Basic CSS for styling, you might want to replace with a framework like Bootstrap -->
+    <link rel="stylesheet" href="{% static 'production_data/css/styles.css' %}">
+</head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<body>
+    <div class="header">
+        <h1>HỆ THỐNG QUẢN LÝ DÂY CHUYỀN SẢN XUẤT</h1>
+        <div class="user-info">NGƯỜI NHẬP LIỆU: TUYẾT-13749</div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            {% include 'production_data/includes/sidebar.html' %}
+        </aside>
+
+        <main class="content">
+            {% include 'production_data/includes/messages.html' %}
+            {% block content %}
+            <!-- Content will be injected here -->
+            {% endblock %}
+        </main>
+    </div>
+     {% block extra_js %}
+    <!-- Các script bổ sung sẽ được chèn vào đây -->
+    {% endblock %}
+</body>
+</html>
