@@ -4,15 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Hệ thống Quản Lí dây chuyền Sản xuất{% endblock %}</title>
+    <title>{% block title %}Quản Lí dây chuyền Sản xuất{% endblock %}</title>
     <!-- Basic CSS for styling, you might want to replace with a framework like Bootstrap -->
     <link rel="stylesheet" href="{% static 'production_data/css/styles.css' %}">
 </head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <body>
     <div class="header">
-        <h1>HỆ THỐNG QUẢN LÝ DÂY CHUYỀN SẢN XUẤT</h1>
-        <div class="user-info">NGƯỜI NHẬP LIỆU: TUYẾT-13749</div>
+        <h1>QUẢN LÝ DÂY CHUYỀN SẢN XUẤT</h1>
+        <div class="user-info">
+            {% if user.is_authenticated %}
+                {{ user.username }}
+                |<form action="{% url 'logout' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" style="background:none; border:none; color:#007bff; cursor:pointer;">
+            Đăng xuất
+        </button>
+    </form>
+            {% endif %}
+        </div>
     </div>
 
     <div class="container">

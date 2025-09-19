@@ -2,82 +2,256 @@
 {% block title %}Danh sách Kết quả Sản xuất{% endblock %}
 
 {% block content %}
-    <div class="card">
-        <h2 class="card-header">Danh sách Kết quả Sản xuất</h2>
-        {% if results %}
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Ngày</th>
-                            <th>機種名NAME OF TYPE</th>
-                            <th>PC PLAN</th>
-                            <th>PRO PLAN</th>
-                            <th>RESULT</th>
-                            <th>PC 差異</th>
-                            <th>PROD 差異</th>
-                            <th>達成率(%)</th>
-                            <th>HOUR PC PLAN</th>
-                            <th>HOUR PRO PLAN</th>
-                            <th>HOUR</th>
-                            <th>QTY/HOUR</th>
-                            <th>PC PLAN-REF 26 (total)</th>
-                            <th>PC PLAN REF 26</th>
-                            <th>実績RSLT</th>
-                            <th>BLANCE</th>
-                            <th>INPUT</th>
-                            <th>OUTPUT AFTER</th>
-                            <th>OUTPUT BEFORE</th>
-                            <th>NG</th>
-                            <th>INPUT THUC TE</th>
-                            <th>Chuẩn Người</th>
-                            <th>Thực tế</th>
-                            <th>Sai Biệt</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for result in results %}
-                            <tr>
-                                <td>{{ result.date|date:"d/m/Y" }}</td>
-                                <td>{{ result.name_of_type }}</td>
-                                <td>{{ result.pc_plan }}</td>
-                                <td>{{ result.pro_plan }}</td>
-                                <td>{{ result.result }}</td>
-                                <td>{{ result.pc_diff|default:"N/A" }}</td>
-                                <td>{{ result.prod_diff|default:"N/A" }}</td>
-                                <td>{{ result.completion_rate|floatformat:2|default:"N/A" }}%</td>
-                                <td>{{ result.hour_pc_plan|floatformat:2 }}</td>
-                                <td>{{ result.hour_pro_plan|floatformat:2 }}</td>
-                                <td>{{ result.hour_actual|floatformat:2 }}</td>
-                                <td>{{ result.qty_hour }}</td>
-                                <td>{{ result.po_plan_ref }}</td>
-                                <td>{{ result.pc_plan_ref_2 }}</td>
-                                <td>{{ result.actuals }}</td>
-                                <td>{{ result.difference|default:"N/A" }}</td>
-                                <td>{{ result.input_material }}</td>
-                                <td>{{ result.output }}</td>
-                                <td>{{ result.output_before }}</td>
-                                <td>{{ result.ng }}</td>
-                                <td>{{ result.input_actual }}</td>
-                                <td>{{ result.person_standard }}</td>
-                                <td>{{ result.person_actual }}</td>
-                                <td>{{ result.person_diff }}</td>
-    <td class="table-actions">
-    <a href="{% url 'production_result_detail' pk=result.pk %}" 
-       class="action-link text-info" title="Xem">👁️</a>
-    <a href="{% url 'production_result_update' pk=result.pk %}" 
-       class="action-link text-primary" title="Sửa">✏️</a>
-    <a href="{% url 'production_result_delete' pk=result.pk %}" 
-       class="action-link text-danger" title="Xóa">🗑️</a>
-</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p>Chưa có dữ liệu sản xuất nào được nhập.</p>
+<div class="card">
+    <h2 class="card-header">Danh sách Kết quả Sản xuất</h2>
+
+    <!-- Form lọc -->
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <input type="date" id="date" name="date" 
+                   value="{{ date_filter|default:'' }}" 
+                   class="form-control form-control-sm">
+            <input type="text" id="name_of_type" class="form-control form-control-sm" 
+                    placeholder="Nhập model...">
+            <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
+            <a href="{% url 'production_results_list' %}" class="btn btn-secondary btn-sm">Reset</a>
+        </div>
+    </form>
+    <style>
+    </style>
+
+    {% if results %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort=date&dir={% if sort == 'date' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                Ngày
+                                {% if sort == 'date' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=name_of_type&dir={% if sort == 'name_of_type' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                NAME OF TYPE
+                                {% if sort == 'name_of_type' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=pc_plan&dir={% if sort == 'pc_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PC PLAN
+                                {% if sort == 'pc_plan' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=pro_plan&dir={% if sort == 'pro_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PRO PLAN
+                                {% if sort == 'pro_plan' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=result&dir={% if sort == 'result' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                RESULT
+                                {% if sort == 'result' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                         <th>
+                            <a href="?sort=pc_diff&dir={% if sort == 'pc_diff' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PC 差異
+                                {% if sort == 'pc_diff' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=prod_diff&dir={% if sort == 'prod_diff' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PROD 差異
+                                {% if sort == 'prod_diff' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=completion_rate&dir={% if sort == 'completion_rate' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                達成率(%)
+                                {% if sort == 'completion_rate' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=hour_pc_plan&dir={% if sort == 'hour_pc_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                HOUR PC PLAN
+                                {% if sort == 'hour_pc_plan' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=hour_pro_plan&dir={% if sort == 'hour_pro_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                HOUR PRO PLAN
+                                {% if sort == 'hour_pro_plan' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                           <th>
+                            <a href="?sort=hour_actual&dir={% if sort == 'hour_actual' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                HOUR
+                                {% if sort == 'hour_actual' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=qty_hour&dir={% if sort == 'qty_hour' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                QTY/HOUR
+                                {% if sort == 'qty_hour' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=po_plan_ref&dir={% if sort == 'po_plan_ref' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PC PLAN-REF 26 (total)
+                                {% if sort == 'po_plan_ref' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=pc_plan_ref_2&dir={% if sort == 'pc_plan_ref_2' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PC PLAN REF 26
+                                {% if sort == 'pc_plan_ref_2' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=actuals&dir={% if sort == 'actuals' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                実績RSLT
+                                {% if sort == 'actuals' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=difference&dir={% if sort == 'difference' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                BLANCE
+                                {% if sort == 'difference' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=input_material&dir={% if sort == 'input_material' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                INPUT
+                                {% if sort == 'input_material' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=output&dir={% if sort == 'output' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                OUTPUT AFTER
+                                {% if sort == 'output' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=output_before&dir={% if sort == 'output_before' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                OUTPUT BEFORE
+                                {% if sort == 'output_before' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=ng&dir={% if sort == 'ng' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                NG
+                                {% if sort == 'ng' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=input_actual&dir={% if sort == 'input_actual' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                INPUT THUC TE
+                                {% if sort == 'input_actual' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=person_standard&dir={% if sort == 'person_standard' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                Chuẩn Người
+                                {% if sort == 'person_standard' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=person_actual&dir={% if sort == 'person_actual' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                Thực tế
+                                {% if sort == 'person_actual' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=person_diff&dir={% if sort == 'person_diff' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                Sai Biệt
+                                {% if sort == 'person_diff' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                    {% include "production_data/_results_table_body.html" %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Phân trang -->
+        {% if results.paginator.num_pages > 1 %}
+        <div class="pagination mt-3 d-flex justify-content-center">
+            <ul class="pagination">
+                {% if results.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">&laquo; First</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ results.previous_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Previous</a></li>
+                {% endif %}
+
+                {% for num in results.paginator.page_range %}
+                    {% if num == results.number %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num >= results.number|add:-2 and num <= results.number|add:2 %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if results.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ results.next_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ results.paginator.num_pages }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Last &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </div>
         {% endif %}
-    </div>
+
+    {% else %}
+        <p>Chưa có dữ liệu sản xuất nào được nhập.</p>
+    {% endif %}
+</div>
 {% endblock %}

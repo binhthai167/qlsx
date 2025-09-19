@@ -1,40 +1,39 @@
 {% extends 'production_data/base.html' %}
 {% block title %}Báo cáo & Thống kê Sản xuất{% endblock %}
-
 {% block content %}
 <div class="card">
     <h2 class="card-header">Báo cáo & Thống kê Sản xuất</h2>
-
     <!-- Form lọc dữ liệu -->
-    <form method="GET" class="mb-4">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="id_start_date">Từ ngày:</label>
-                <input type="date" id="id_start_date" name="start_date" class="form-control" value="{{ start_date }}">
-            </div>
-            <div class="form-group">
-                <label for="id_end_date">Đến ngày:</label>
-                <input type="date" id="id_end_date" name="end_date" class="form-control" value="{{ end_date }}">
-            </div>
+    <form method="GET" style="display: inline-block; font-size: 0.9rem; margin-bottom: 10px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <label for="id_start_date">Từ:</label>
+            <input type="date" id="id_start_date" name="start_date" value="{{ start_date }}" style="width: 130px; padding: 3px; font-size: 0.9rem;">
+            <label for="id_end_date">Đến:</label>
+            <input type="date" id="id_end_date" name="end_date" value="{{ end_date }}" style="width: 130px; padding: 3px; font-size: 0.9rem;">
         </div>
-        <button type="submit" class="btn btn-primary">Lọc Dữ liệu</button>
-        <a href="{% url 'production_report' %}" class="btn btn-secondary">Đặt lại</a>
+        <div style="margin-top: 5px; display: flex; gap: 5px;">
+            <button class="btn btn-primary type="submit" style="padding: 3px 8px; font-size: 0.85rem;">Lọc</button>
+            <a class="btn btn-secondary" href="{% url 'production_report' %}" style="padding: 3px 8px; font-size: 0.85rem; text-decoration: none; border: 1px solid #ccc; border-radius: 3px; background: #eee; color: #000;">Reset</a>
+        </div>
     </form>
-
     <hr>
-
     <h3>Tổng hợp Sản lượng</h3>
-    <div class="chart-container" style="position: relative; height:40vh; width:80vw; margin-bottom: 30px;">
-        <canvas id="productionSummaryChart"></canvas>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+        <!-- Biểu đồ cột lớn bên trái -->
+        <div class="chart-container" style="flex: 1; height: 50vh; min-width: 500px;">
+            <canvas id="productionSummaryChart"></canvas>
+        </div>
+        <!-- Biểu đồ tròn nhỏ bên phải -->
+        <div class="chart-container" style="width: 300px; height: 300px; flex-shrink: 0;">
+            <canvas id="productionPieChart"></canvas>
+        </div>
     </div>
-
     <!-- Nút chọn chế độ hiển thị -->
     <div class="chart-filters">
-        <button id="btnProdByType" class="active">Theo Model</button>
+        <button id="btnProdByPrefix">Theo Nhóm Model</button>
+        <button id="btnProdByType">Theo Model</button>
         <button id="btnProdByDate">Theo Ngày</button>
-        
     </div>
-
     <!-- Bảng theo Ngày (ẩn mặc định) -->
     <div id="tableProdByDate" class="table-container mb-4 hidden">
         <table class="data-table">
@@ -47,6 +46,8 @@
                     <th>Chênh lệch PC (Tổng)</th>
                     <th>Chênh lệch PRO (Tổng)</th>
                     <th>Tỷ lệ thành tích(%)</th>
+                    <th>HOUR PC PLAN(Tổng)</th>
+                    <th>HOUR PRO PLAN(Tổng)</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,21 +59,109 @@
                     <td>{{ item.total_pc_diff|default:0 }}</td>
                     <td>{{ item.total_prod_diff|default:0 }}</td>
                     <td>{{ item.total_prod_diff|default:0 }}</td>
-                    <td>{{ item.avg_completion_rate|floatformat:2 }}%</td>
+                    <td class=" {% if item.avg_completion_rate >= 100 %} rate-high {% elif item.avg_completion_rate >= 80 %} rate-medium {% else %} rate-low {% endif %} ">
+                        {{ item.avg_completion_rate|floatformat:2|default:"N/A" }}%
+                    </td>
+                    <td>{{ item.total_hour_pc_plan|default:0 }}</td>
+                    <td>{{ item.total_hour_pro_plan|default:0 }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="4">Không có dữ liệu.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        <!-- Pagination -->
+        <div class="pagination">
+            {% if daily_production_summary.has_previous %}
+            <a href="?page=1#tableProdByDate">&laquo;</a>
+            <a href="?page={{ daily_production_summary.previous_page_number }}#tableProdByDate">‹</a>
+            {% endif %}
+            {% for num in daily_production_summary.paginator.page_range %}
+            {% if daily_production_summary.number == num %}
+            <span class="current">{{ num }}</span>
+            {% else %}
+            <a href="?page={{ num }}#tableProdByDate">{{ num }}</a>
+            {% endif %}
+            {% endfor %}
+            {% if daily_production_summary.has_next %}
+            <a href="?page={{ daily_production_summary.next_page_number }}#tableProdByDate">›</a>
+            <a href="?page={{ daily_production_summary.paginator.num_pages }}#tableProdByDate">&raquo;</a>
+            {% endif %}
+        </div>
     </div>
-
     <!-- Bảng theo model (hiện mặc định) -->
-    <div id="tableProdByType" class="table-container mb-4">
+    <div id="tableProdByType" class="table-container mb-4 h">
+        <div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="?sort=name_of_type&dir={% if sort == 'name_of_type' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                Model
+                                {% if sort == 'name_of_type' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort=pc_plan&dir={% if sort == 'pc_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                                PC Plan (Tổng)
+                                {% if sort == 'pc_plan' %}
+                                    {% if dir == 'asc' %}▲{% else %}▼{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>PRO Plan (Tổng)</th>
+                        <th>Result (Tổng)</th>
+                        <th>Chênh lệch PC (Tổng)</th>
+                        <th>Chênh lệch PRO (Tổng)</th>
+                        <th>Tỷ lệ thành tích(%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in production_by_type_summary %}
+                    <tr>
+                        <td>{{ item.name_of_type }}</td>
+                        <td>{{ item.total_pc_plan|default:0 }}</td>
+                        <td>{{ item.total_pro_plan|default:0 }}</td>
+                        <td>{{ item.total_result|default:0 }}</td>
+                        <td>{{ item.total_pc_diff|default:0 }}</td>
+                        <td>{{ item.total_prod_diff|default:0 }}</td>
+                        <td class=" {% if item.total_completion_rate >= 100 %} rate-high {% elif item.total_completion_rate >= 80 %} rate-medium {% else %} rate-low {% endif %} ">
+                            {{ item.total_completion_rate|floatformat:2|default:"N/A" }}%
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7">Không có dữ liệu.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <!-- # Phân trang -->
+            <div class="pagination">
+                {% if production_by_type_summary.has_previous %}
+                <a href="?page=1#tableProdByType">&laquo;</a>
+                <a href="?page={{ production_by_type_summary.previous_page_number }}#tableProdByType">‹</a>
+                {% endif %}
+                {% for num in production_by_type_summary.paginator.page_range %}
+                {% if production_by_type_summary.number == num %}
+                <span class="current">{{ num }}</span>
+                {% elif num > production_by_type_summary.number|add:'-5' and num < production_by_type_summary.number|add:'5' %}
+                <a href="?page={{ num }}#tableProdByType">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+                {% if production_by_type_summary.has_next %}
+                <a href="?page={{ production_by_type_summary.next_page_number }}#tableProdByType">›</a>
+                <a href="?page={{ production_by_type_summary.paginator.num_pages }}#tableProdByType">&raquo;</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Bảng theo Prefix (ẩn mặc định) -->
+    <div id="tableProdByPrefix" class="table-container mb-4 hidden">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Loại Sản phẩm</th>
+                    <th>Nhóm Model</th>
                     <th>PC Plan (Tổng)</th>
                     <th>PRO Plan (Tổng)</th>
                     <th>Result (Tổng)</th>
@@ -82,34 +171,51 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in production_by_type_summary %}
+                {% for item in production_by_prefix_summary %}
                 <tr>
-                    <td>{{ item.name_of_type }}</td>
+                    <td>{{ item.prefix }}</td>
                     <td>{{ item.total_pc_plan|default:0 }}</td>
                     <td>{{ item.total_pro_plan|default:0 }}</td>
                     <td>{{ item.total_result|default:0 }}</td>
                     <td>{{ item.total_pc_diff|default:0 }}</td>
                     <td>{{ item.total_prod_diff|default:0 }}</td>
-                    <td>{{ item.total_completion_rate|default:0 }}</td>
+                    <td class=" {% if item.avg_completion_rate >= 100 %} rate-high {% elif item.avg_completion_rate >= 80 %} rate-medium {% else %} rate-low {% endif %} ">
+                        {{ item.avg_completion_rate|floatformat:2 }}%
+                    </td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="7">Không có dữ liệu.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
+        <!-- Pagination -->
+        <div class="pagination">
+            {% if production_by_prefix_summary.has_previous %}
+            <a href="?page=1#tableProdByPrefix">&laquo;</a>
+            <a href="?page={{ production_by_prefix_summary.previous_page_number }}#tableProdByPrefix">‹</a>
+            {% endif %}
+            {% for num in production_by_prefix_summary.paginator.page_range %}
+            {% if production_by_prefix_summary.number == num %}
+            <span class="current">{{ num }}</span>
+            {% elif num > production_by_prefix_summary.number|add:'-5' and num < production_by_prefix_summary.number|add:'5' %}
+            <a href="?page={{ num }}#tableProdByPrefix">{{ num }}</a>
+            {% endif %}
+            {% endfor %}
+            {% if production_by_prefix_summary.has_next %}
+            <a href="?page={{ production_by_prefix_summary.next_page_number }}#tableProdByPrefix">›</a>
+            <a href="?page={{ production_by_prefix_summary.paginator.num_pages }}#tableProdByPrefix">&raquo;</a>
+            {% endif %}
+        </div>
     </div>
-
     <h3>Chênh lệch Nhân sự</h3>
     <div class="chart-container" style="position: relative; height:40vh; width:80vw;">
         <canvas id="personDiffCombinedChart"></canvas>
     </div>
-
     <!-- Filter control -->
     <div class="chart-filters">
         <button id="btnByModel" class="active">Theo Model</button>
         <button id="btnByDate">Theo Ngày</button>
     </div>
-
     <h3>Tổng cộng Toàn Bộ</h3>
     <div class="table-container">
         <table class="data-table">
@@ -135,7 +241,7 @@
                     <td>{{ grand_totals.overall_total_result|default:0 }}</td>
                     <td>{{ grand_totals.overall_total_prod_diff|default:0 }}</td>
                     <td>{{ grand_totals.overall_total_hour_pc_plan|default:0 }}</td>
-                    <td>{{ grand_totals.overall_total_hour_prod_result|default:0 }}</td>
+                    <td>{{ grand_totals.overall_total_hour_actual|default:0 }}</td>
                     <td>{{ grand_totals.overall_total_hour_prod_diff|default:0 }}</td>
                     <td>{{ grand_totals.overall_total_actual_shift_a|default:0 }}</td>
                     <td>{{ grand_totals.overall_total_actual_shift_b|default:0 }}</td>
@@ -149,7 +255,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -158,34 +263,98 @@ document.addEventListener('DOMContentLoaded', function() {
     const chartDates = JSON.parse('{{ chart_dates|safe }}');
     const chartProdResults = JSON.parse('{{ chart_prod_results|safe }}');
     const chartPcPlans = JSON.parse('{{ chart_pc_plans|safe }}');
-
     const chartTypeLabels = JSON.parse('{{ chart_type_labels|safe }}');
     const chartTypeProdResults = JSON.parse('{{ chart_type_prod_results|safe }}');
     const chartTypePcPlans = JSON.parse('{{ chart_type_pc_plans|safe }}');
-
-    const modelLabels  = JSON.parse('{{ chart_model_labels|safe }}');
-    const modelPersonDiffs  = JSON.parse('{{ chart_model_person_diffs|safe }}');
+    const modelLabels = JSON.parse('{{ chart_model_labels|safe }}');
+    const modelPersonDiffs = JSON.parse('{{ chart_model_person_diffs|safe }}');
     const chartPersonDiffs = JSON.parse('{{ chart_person_diffs|safe }}');
+    const chartPrefixLabels = JSON.parse('{{ chart_prefix_labels|safe }}');
+    const chartPrefixResults = JSON.parse('{{ chart_prefix_results|safe }}');
+    const chartPrefixPcPlans = JSON.parse('{{ chart_prefix_pc_plans|safe }}');
 
-    // Chart sản lượng (mặc định theo Model)
+    // Pie Chart Sản lượng theo Nhóm Model
+    const pieCtx = document.getElementById('productionPieChart').getContext('2d');
+    let pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: chartPrefixLabels, // Nhãn = nhóm model
+            datasets: [{
+                label: 'Sản lượng Thực tế',
+                data: chartPrefixResults, // Dữ liệu = số lượng SX thực tế
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)'
+                ],
+                borderColor: 'white',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Cơ cấu sản lượng theo Nhóm Model'
+                },
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.parsed;
+                            let total = context.chart._metasets[0].total; // tổng dataset
+                            let percentage = ((value / total) * 100).toFixed(1) + "%";
+                            return label + ": " + value + " (" + percentage + ")";
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    function updatePieChart(mode) {
+        if (mode === "date") {
+            pieChart.data.labels = chartDates;
+            pieChart.data.datasets[0].data = chartProdResults;
+            pieChart.options.plugins.title.text = "Cơ cấu sản lượng theo Ngày";
+        } else if (mode === "prefix") {
+            pieChart.data.labels = chartPrefixLabels;
+            pieChart.data.datasets[0].data = chartPrefixResults;
+            pieChart.options.plugins.title.text = "Cơ cấu sản lượng theo Nhóm Model";
+        } else if (mode === "type") {
+            pieChart.data.labels = chartTypeLabels;
+            pieChart.data.datasets[0].data = chartTypeProdResults;
+            pieChart.options.plugins.title.text = "Cơ cấu sản lượng theo Model";
+        }
+        pieChart.update();
+    }
+
+    // ===== Chart sản lượng (mặc định theo Nhóm Model) =====
     const prodCtx = document.getElementById('productionSummaryChart').getContext('2d');
     let prodChart = new Chart(prodCtx, {
         type: 'bar',
         data: {
-            labels: chartTypeLabels,
+            labels: chartPrefixLabels,
             datasets: [
                 {
-                    label: 'Thực tế SX',
-                    data: chartTypeProdResults,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    label: 'Kế hoạch PC',
+                    data: chartPrefixPcPlans,
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
                     borderWidth: 1
                 },
                 {
-                    label: 'Kế hoạch PC',
-                    data: chartTypePcPlans,
-                    backgroundColor: 'rgba(255, 206, 86, 0.6)',
-                    borderColor: 'rgba(255, 206, 86, 1)',
+                    label: 'Thực tế SX',
+                    data: chartPrefixResults,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
                 }
             ]
@@ -193,34 +362,61 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { title: { display: true, text: 'Sản lượng theo Model' } },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Sản lượng theo Nhóm Model'
+                }
+            },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Số lượng' } },
-                x: { title: { display: true, text: 'Model' } }
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Số lượng'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Nhóm Model'
+                    }
+                }
             }
         }
     });
 
-    // Cập nhật chart sản lượng
     function updateProdChart(mode) {
         if (mode === "date") {
             prodChart.data.labels = chartDates;
-            prodChart.data.datasets[0].data = chartProdResults;
-            prodChart.data.datasets[1].data = chartPcPlans;
+            prodChart.data.datasets[0].data = chartPcPlans;
+            prodChart.data.datasets[1].data = chartProdResults;
             prodChart.options.plugins.title.text = "Sản lượng theo Ngày";
             prodChart.options.scales.x.title.text = "Ngày";
             document.getElementById("tableProdByDate").classList.remove("hidden");
             document.getElementById("tableProdByType").classList.add("hidden");
+            document.getElementById("tableProdByPrefix").classList.add("hidden");
+        } else if (mode === "prefix") {
+            prodChart.data.labels = chartPrefixLabels;
+            prodChart.data.datasets[0].data = chartPrefixPcPlans;
+            prodChart.data.datasets[1].data = chartPrefixResults;
+            prodChart.options.plugins.title.text = "Sản lượng theo Nhóm Model";
+            prodChart.options.scales.x.title.text = "Nhóm Model";
+            document.getElementById("tableProdByPrefix").classList.remove("hidden");
+            document.getElementById("tableProdByDate").classList.add("hidden");
+            document.getElementById("tableProdByType").classList.add("hidden");
         } else {
             prodChart.data.labels = chartTypeLabels;
-            prodChart.data.datasets[0].data = chartTypeProdResults;
-            prodChart.data.datasets[1].data = chartTypePcPlans;
+            prodChart.data.datasets[0].data = chartTypePcPlans;
+            prodChart.data.datasets[1].data = chartTypeProdResults;
             prodChart.options.plugins.title.text = "Sản lượng theo Model";
             prodChart.options.scales.x.title.text = "Model";
             document.getElementById("tableProdByType").classList.remove("hidden");
             document.getElementById("tableProdByDate").classList.add("hidden");
+            document.getElementById("tableProdByPrefix").classList.add("hidden");
         }
         prodChart.update();
+        updatePieChart(mode);
     }
 
     // Gán sự kiện cho nút sản lượng
@@ -232,9 +428,13 @@ document.addEventListener('DOMContentLoaded', function() {
         updateProdChart("type");
         setActiveBtnProd("btnProdByType");
     });
+    document.getElementById("btnProdByPrefix").addEventListener("click", function() {
+        updateProdChart("prefix");
+        setActiveBtnProd("btnProdByPrefix");
+    });
 
     function setActiveBtnProd(activeId) {
-        document.querySelectorAll("#btnProdByDate, #btnProdByType").forEach(btn => {
+        document.querySelectorAll("#btnProdByDate, #btnProdByType, #btnProdByPrefix").forEach(btn => {
             btn.classList.remove("active");
         });
         document.getElementById(activeId).classList.add("active");
@@ -257,10 +457,26 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { title: { display: true, text: 'Chênh lệch Nhân sự theo Model' } },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Chênh lệch Nhân sự theo Model'
+                }
+            },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Số người' } },
-                x: { title: { display: true, text: 'Model' } }
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Số người'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Model'
+                    }
+                }
             }
         }
     });
@@ -297,6 +513,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         document.getElementById(activeId).classList.add("active");
     }
+    function showTableByHash(hash) {
+    const tableDate = document.getElementById("tableProdByDate");
+    const tableType = document.getElementById("tableProdByType");
+    const tablePrefix = document.getElementById("tableProdByPrefix");
+
+    // Ẩn hết
+    tableDate.classList.add("hidden");
+    tableType.classList.add("hidden");
+    tablePrefix.classList.add("hidden");
+
+    // Mặc định
+    let mode = "type";
+    if(hash === "#tableProdByDate") {
+        tableDate.classList.remove("hidden");
+        setActiveBtnProd("btnProdByDate");
+        mode = "date";
+    } else if(hash === "#tableProdByPrefix") {
+        tablePrefix.classList.remove("hidden");
+        setActiveBtnProd("btnProdByPrefix");
+        mode = "prefix";
+    } else {
+        tableType.classList.remove("hidden");
+        setActiveBtnProd("btnProdByType");
+        mode = "type";
+    }
+
+    // Update chart sản lượng theo mode
+    updateProdChart(mode);
+
+    // Scroll mượt
+    const el = document.querySelector(hash);
+    if(el) el.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+        const el = document.querySelector(hash);
+        if(el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+}
+
+// Chạy khi hash thay đổi (người dùng click phân trang)
+window.addEventListener("hashchange", function() {
+    showTableByHash(window.location.hash);
+});
+
+let hash = window.location.hash;
+if (hash) {
+    showTableByHash(hash);
+} else {
+    // Nếu không có hash, thì để mặc định hiển thị Model
+    updateProdChart("prefix");
+    setActiveBtnProd("btnProdByPrefix");
+}
 });
 </script>
 {% endblock %}

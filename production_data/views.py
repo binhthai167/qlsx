@@ -11,28 +11,52 @@ from django.db.models.functions import Coalesce
 from datetime import timedelta # Để tính toán ngày
 from django.db.models import Count
 from django.db.models.functions import NullIf
+from django.db.models.functions import Substr
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
+from .forms import SignUpForm
+from django.contrib.auth.decorators import permission_required
+from django.template.loader import render_to_string
+from django.http import JsonResponse
+
+
+
+def signup_view(request):
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()   # Lưu user vào DB
+            login(request, user) # Đăng nhập ngay sau khi đăng ký
+            return redirect("login")  # Đổi "home" thành trang bạn muốn sau đăng ký
+    else:
+        form = SignUpForm()
+    return render(request, "signup.html", {"form": form})
 
 def data_entry_view(request):
     if request.method == 'POST':
-        form = ProductionResultForm(request.POST)
+        form = ProductionResultForm(request.POST, user=request.user)  # Truyền user hiện tại vào form
         if form.is_valid():
             form.save()
             messages.success(request, 'Dữ liệu đã được nhập thành công!')
-            return redirect('data_entry') # Chuyển hướng về trang nhập liệu sau khi lưu
+            return redirect('data_entry')  # Chuyển hướng về trang nhập liệu sau khi lưu
         else:
             messages.error(request, 'Có lỗi xảy ra khi nhập liệu. Vui lòng kiểm tra lại.')
     else:
         # Nếu muốn hiển thị ngày hiện tại tự động
         initial_data = {'date': timezone.now().strftime('%Y-%m-%d')}
-        form = ProductionResultForm(initial=initial_data)
+        form = ProductionResultForm(initial=initial_data, user=request.user)  # ⚡ thêm user vào đây
 
     context = {
         'form': form,
-        'current_page': 'entry' # Để active menu item
+        'current_page': 'entry'  # Để active menu item
     }
     return render(request, 'production_data/data_entry.html', context)
 
+@login_required
 def production_results_list(request):
+    date_filter = request.GET.get('date')
+    name_filter = request.GET.get('name_of_type')
     # Lấy tất cả kết quả, sắp xếp theo ngày giảm dần và tên loại tăng dần
     results = ProductionResult.objects.all().order_by('-date', 'name_of_type')
 
@@ -44,11 +68,34 @@ def production_results_list(request):
     #     total_hour_pc_plan=Sum('hour_pc_plan'),
     #     # ... thêm các tổng khác
     # )
+    if date_filter:
+        results = results.filter(date=date_filter)
+    if name_filter:
+        results = results.filter(name_of_type__icontains=name_filter)
+     # Sort dữ liệu
+    sort = request.GET.get('sort', 'date')  # default sort by date
+    dir = request.GET.get('dir', 'asc')     # default ascending
+    valid_fields = [f.name for f in ProductionResult._meta.fields]  # tất cả field model
+    if sort in valid_fields:
+        if dir == 'desc':
+            sort = f'-{sort}'
+        results = results.order_by(sort)
+
+     # Phân trang, mỗi trang 10 mục mặc định
+    paginator = Paginator(results, 10)  
+    page_number = request.GET.get('page')
+    results = paginator.get_page(page_number)
+
 
     context = {
         'results': results,
+        'date_filter': date_filter,
+        'name_filter': name_filter,
         # 'totals': totals,
-        'current_page': 'list' # Để active menu item
+        'current_page': 'list', # Để active menu item
+        'sort': request.GET.get('sort', ''),
+        'dir': request.GET.get('dir', ''),
+
     }
     return render(request, 'production_data/production_results_list.html', context)
 
@@ -92,8 +139,8 @@ def production_result_delete(request, pk):
     }
     return render(request, 'production_data/production_result_confirm_delete.html', context)
 
-# Các view cho báo cáo và thống kê có thể phát triển thêm
-# View cho báo cáo và thống kê đã được mở rộng
+
+# @permission_required('production_data.view_productionresult', raise_exception=True)
 def production_report(request):
     # Lấy các tham số lọc từ request
     start_date_str = request.GET.get('start_date')
@@ -118,7 +165,6 @@ def production_report(request):
         start_date, end_date = end_date, start_date # Hoán đổi nếu không hợp lệ
         messages.warning(request, 'Ngày bắt đầu không được lớn hơn ngày kết thúc. Đã điều chỉnh.')
 
-
     # Lọc dữ liệu theo khoảng ngày
     filtered_results = ProductionResult.objects.filter(date__range=[start_date, end_date]).order_by('date', 'name_of_type')
 
@@ -132,7 +178,12 @@ def production_report(request):
         avg_completion_rate=ExpressionWrapper(
             Coalesce(Sum('completion_rate') / NullIf(Count('id'), 0), 0),
             output_field=DecimalField(max_digits=5, decimal_places=2)
-        )
+        ),
+        total_hour_pc_plan=Sum('hour_pc_plan'),
+        total_hour_pro_plan=Sum('hour_pro_plan'),
+        total_hour_prod_diff=Sum(
+            ExpressionWrapper(F('hour_actual') - F('hour_pro_plan'), output_field=DecimalField())
+        ),
     ).order_by('date')
 
     person_diff_by_model = filtered_results.values('name_of_type').annotate(
@@ -156,6 +207,12 @@ def production_report(request):
         total_completion_rate=Sum('completion_rate'),
         total_person_diff=Sum('person_diff', output_field=IntegerField())
     ).order_by('name_of_type')
+        # Dữ liệu cho biểu đồ tổng sản lượng theo loại
+    type_labels = [item['name_of_type'] for item in production_by_type_summary]
+    type_prod_results = [item['total_result'] for item in production_by_type_summary]
+    type_pc_plans = [item['total_pc_plan'] for item in production_by_type_summary]
+    person_diffs = [item['total_person_diff'] for item in daily_production_summary]
+
 
 
     # Tính tổng cho bảng tóm tắt
@@ -167,7 +224,10 @@ def production_report(request):
         overall_total_hour_prod_plan=Sum('hour_pro_plan'),
         overall_total_hour_prod_diff=Sum(
         ExpressionWrapper(F('hour_actual') - F('hour_pro_plan'), output_field=DecimalField())
+        
     ),
+        overall_total_person_diff=Sum('person_diff', output_field=IntegerField()),
+        overall_total_hour_actual=Sum('hour_actual'),
         # overall_total_actual_shift_a=Sum('actual_shift_a'),
         # overall_total_actual_shift_b=Sum('actual_shift_b'),
         # overall_total_actual_shift_c=Sum('actual_shift_c'),
@@ -176,21 +236,65 @@ def production_report(request):
         # overall_total_actual_diff=Sum('actual_diff'),
     )
 
+    production_by_prefix_summary = (
+    filtered_results
+    .annotate(prefix=Substr('name_of_type', 1, 4))
+    .values('prefix')
+    .annotate(
+        total_pc_plan=Sum('pc_plan'),
+        total_pro_plan=Sum('pro_plan'),
+        total_result=Sum('result'),
+        total_pc_diff=Sum('pc_diff'),
+        total_prod_diff=Sum('prod_diff'),
+        avg_completion_rate=ExpressionWrapper(
+            Coalesce(Sum('completion_rate') / NullIf(Count('id'), 0), 0),
+            output_field=DecimalField(max_digits=5, decimal_places=2)
+        ),
+        
+    )
+    .order_by('prefix')
+)
 
-        # Dữ liệu cho biểu đồ tổng sản lượng theo loại
-    type_labels = [item['name_of_type'] for item in production_by_type_summary]
-    type_prod_results = [item['total_result'] for item in production_by_type_summary]
-    type_pc_plans = [item['total_pc_plan'] for item in production_by_type_summary]
-    person_diffs = [item['total_person_diff'] for item in daily_production_summary]
+    # Dữ liệu chart (luôn full dataset)
+    prefix_labels = [item['prefix'] for item in production_by_prefix_summary]
+    prefix_pc_plans = [item['total_pc_plan'] for item in production_by_prefix_summary]
+    prefix_results = [item['total_result'] for item in production_by_prefix_summary]
+
+
+  
+
+    page = request.GET.get('page', 1)
+    per_page = 5 
+    paginator_type = Paginator(production_by_type_summary, per_page)
+    paginator_prefix = Paginator(production_by_prefix_summary, per_page)
+    paginator_daily = Paginator(daily_production_summary, per_page)
+
+    #sort
+    sort_field = request.GET.get('sort', 'date')  # default sort by 'date'
+    sort_dir = request.GET.get('dir', 'asc')      # default ascending
+
+    valid_fields = [f.name for f in ProductionResult._meta.fields]
+
+    if sort_field in valid_fields:
+        if sort_dir == 'desc':
+            sort_field = f'-{sort_field}'
+        filtered_results = filtered_results.order_by(sort_field)
 
 
     context = {
         'current_page': 'report',
+        'sort': request.GET.get('sort', 'date'),
+        'dir': request.GET.get('dir', 'asc'),
+        'date_filter': request.GET.get('date_filter', ''),
+        'name_filter': request.GET.get('name_of_type', ''),
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
-        'daily_production_summary': daily_production_summary, # Bảng chi tiết
-        'production_by_type_summary': production_by_type_summary, # Bảng chi tiết theo loại
+        'daily_production_summary': paginator_daily.get_page(page), # Bảng chi tiết
+        'production_by_type_summary': paginator_type.get_page(page), # Bảng chi tiết theo loại
         'grand_totals': grand_totals,
+        'production_by_prefix_summary': paginator_prefix.get_page(page), # Bảng chi tiết theo tiền tố
+        
+
 
         # Dữ liệu cho Chart.js
         'chart_dates': json.dumps(dates),
@@ -202,5 +306,34 @@ def production_report(request):
         'chart_person_diffs': json.dumps(person_diffs),
         'chart_model_labels': json.dumps(model_labels),
         'chart_model_person_diffs': json.dumps(model_person_diffs),
+        'chart_prefix_labels': json.dumps(prefix_labels),
+        'chart_prefix_pc_plans': json.dumps(prefix_pc_plans),
+        'chart_prefix_results': json.dumps(prefix_results),
     }
     return render(request, 'production_data/production_report.html', context)
+
+@login_required
+def production_setting(request):
+    context = {
+        'current_page': 'setting'
+    }
+    return render(request, 'production_data/production_setting.html', context)
+
+
+def ajax_filter_results(request):
+    name_filter = request.GET.get("name_of_type", "").strip()
+    date_filter = request.GET.get("date", "")
+
+    results = ProductionResult.objects.all()
+
+    if name_filter:
+        results = results.filter(name_of_type__icontains=name_filter)
+    if date_filter:
+        results = results.filter(date=date_filter)
+
+    # phân trang lại nếu cần
+    context = {
+        "results": results,
+    }
+    html = render_to_string("production_data/_results_table_body.html", context, request=request)
+    return JsonResponse({"html": html})

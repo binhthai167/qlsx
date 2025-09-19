@@ -1,5 +1,7 @@
 from django import forms
 from .models import ProductionResult
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
 class ProductionResultForm(forms.ModelForm):
     class Meta:
@@ -73,7 +75,19 @@ class ProductionResultForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # lấy user từ kwargs (do view truyền vào)
         super().__init__(*args, **kwargs)
-        # Thiết lập giá trị mặc định cho user_input nếu form là mới
-        if not self.instance.pk: # Kiểm tra nếu đây là form tạo mới
-            self.initial['user_input'] = 'TUYẾT-13749' # Đặt tên người nhập liệu mặc định
+
+        # Nếu là form tạo mới thì set user mặc định
+        if not self.instance.pk and user:
+            self.initial['user_input'] = user.username
+
+class SignUpForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
+    )
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "password1", "password2")

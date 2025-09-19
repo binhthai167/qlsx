@@ -15,7 +15,7 @@ class ProductionResult(models.Model):
     name_of_type = models.CharField(max_length=255, verbose_name="Mã sản phẩm (MODEL)") # Đổi verbose_name cho rõ hơn
 
     # (Yesterday PLN/RSLT)
-    pc_plan = models.IntegerField(verbose_name="PC PLAN")
+    pc_plan = models.IntegerField(verbose_name="PC PLAN", null=True, blank=True) # Trường mới
     pro_plan = models.IntegerField(verbose_name="PRO PLAN", null=True, blank=True) # Trường mới
     result = models.IntegerField(verbose_name="RESULT", null=True, blank=True) # Trường mới
     pc_diff = models.IntegerField(verbose_name="PC 差異 (Chênh lệch)", blank=True, null=True) # Có thể tính toán tự động
@@ -25,15 +25,15 @@ class ProductionResult(models.Model):
 
     # Giờ làm việc
     to_assess = models.CharField(max_length=10, blank=True, null=True, verbose_name="TO ASSESS") # Ví dụ: O/X
-    hour_pc_plan = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="HOUR PC PLAN")
-    hour_pro_plan = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="HOUR PRO")
-    hour_actual = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="HOUR Thực lĩnh")
+    hour_pc_plan = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="HOUR PC PLAN", blank=True, null=True) # Có thể tính toán tự động
+    hour_pro_plan = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="HOUR PRO" , blank=True, null=True) # Có thể tính toán tự động
+    hour_actual = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="HOUR Thực lĩnh", blank=True, null=True) # Có thể tính toán tự động
     qty_hour = models.IntegerField(verbose_name="QTY/HOUR",blank=True, null=True) # Số lượng trên mỗi giờ
 
     # Tổng hợp & Đánh giá
-    po_plan_ref = models.IntegerField(verbose_name="PO PLAN-REF")
-    pc_plan_ref_2 = models.IntegerField(verbose_name="PC PLAN REF 2")
-    actuals = models.IntegerField(verbose_name="Kết quả (Actuals)")
+    po_plan_ref = models.IntegerField(verbose_name="PO PLAN-REF", blank=True, null=True) # Có thể tính toán tự động
+    pc_plan_ref_2 = models.IntegerField(verbose_name="PC PLAN REF 2", blank=True, null=True) # Có thể tính toán tự động
+    actuals = models.IntegerField(verbose_name="Kết quả (Actuals)", blank=True, null=True) # Có thể tính toán tự động
     difference = models.IntegerField(verbose_name="Chênh lệch", blank=True, null=True) # Có thể tính toán tự động
     plan_percentage = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Đạt tỉ lệ (%) (Plan)", blank=True, null=True) # Có thể tính toán tự động
     total = models.IntegerField(verbose_name="TOTAL", blank=True, null=True) # Có thể tính toán tự động
