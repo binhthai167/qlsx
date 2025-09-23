@@ -15,11 +15,20 @@ body {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    position: fixed; /* Cố định header */
+    top: 0; /* Đặt ở đầu trang */
+    width: 100%; /* Chiều rộng toàn màn hình */
+    z-index: 1000; /* Đảm bảo header ở trên các phần tử khác */
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
 }
+
 .header h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 18px;
     letter-spacing: 1px;
+}
+.container {
+    margin-top: 90px; /* Điều chỉnh dựa trên chiều cao header, khoảng 50px (header) + 15px (padding) */
 }
 .user-info {
     background-color: #34495e;
@@ -34,7 +43,8 @@ body {
     min-height: calc(100vh - 64px);
 }
 .sidebar {
-    width: 120px;
+    position: fixed;
+    width: 100px;
     background-color: #ecf0f1;
     padding: 10px;
     box-shadow: 2px 0 6px rgba(0,0,0,0.05);
@@ -67,9 +77,10 @@ body {
     flex-grow: 1;
     padding: 25px;
     max-width: 1200px;
-    margin: 0 auto;
+    margin-left: 100px; /* Bù cho chiều rộng sidebar (120px) + khoảng trống 20px */
+    margin-right: auto; /* Giữ căn phải để giới hạn max-width */
+    z-index: 1; /* Đảm bảo nội dung chính ở dưới sidebar */
 }
-
 /* ===== Card ===== */
 .card {
     background-color: white;
@@ -499,6 +510,38 @@ input:focus, select:focus, textarea:focus {
         .data-table th a:hover {
             text-decoration: underline; /* optional: chỉ gạch chân khi hover */
         }
+/* KPI Cards */
+.card {
+  border: none;
+  border-radius: 1rem; /* Bo tròn card */
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
 
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.card-body {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+}
+
+.card-body span {
+  font-size: 2.2rem; /* Icon lớn hơn */
+  margin-right: 0.75rem;
+}
+
+.card-body h5 {
+  font-weight: 700;
+  margin: 0;
+}
+
+.card-body small {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
 
 

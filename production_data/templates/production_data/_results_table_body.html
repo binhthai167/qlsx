@@ -2,7 +2,7 @@
     {% for result in results %}
         <tr>
             <td>{{ result.date|date:"d/m/Y" }}</td>
-            <td class="highlight">{{ result.name_of_type }}</td>
+            <td class="highlight"> <a href="{% url 'production_result_detail' pk=result.pk %}">{{ result.name_of_type }} </a></td>
             <td>{{ result.pc_plan }}</td>
             <td>{{ result.pro_plan }}</td>
             <td>{{ result.result }}</td>
@@ -35,7 +35,7 @@
                     diff-zero
                 {% endif %}
             ">
-                {{ result.difference|default:"N/A" }}
+                {{ result.difference|default:"0" }}
             </td>
             <td>{{ result.input_material }}</td>
             <td>{{ result.output }}</td>
@@ -53,3 +53,13 @@
         </tr>
     {% endfor %}
 </tbody>
+<style>
+    .highlight a {
+        font-weight: bold;
+        color: #2c3e50;
+        text-decoration: none;
+    }
+    .highlight a:hover {
+        text-decoration: underline;
+    }
+</style>

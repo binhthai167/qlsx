@@ -1,6 +1,8 @@
+<nav class="sidebar-nav">
 <ul>
+    <li><a href="{% url 'production_report' %}" class="{% if current_page == 'report' %}active{% endif %}">DASH BOARD</a></li>
     <li><a href="{% url 'data_entry' %}" class="{% if current_page == 'entry' %}active{% endif %}">NHẬP LIỆU</a></li>
     <li><a href="{% url 'production_results_list' %}" class="{% if current_page == 'list' %}active{% endif %}">DANH SÁCH</a></li>
-    <li><a href="{% url 'production_report' %}" class="{% if current_page == 'report' %}active{% endif %}">THỐNG KÊ</a></li>
     <li><a href="{% url 'production_setting' %}" class="{% if current_page == 'setting' %}active{% endif %}">SETTING</a></li>
 </ul>
+</nav>

@@ -8,19 +8,30 @@
     <!-- Basic CSS for styling, you might want to replace with a framework like Bootstrap -->
     <link rel="stylesheet" href="{% static 'production_data/css/styles.css' %}">
 </head>
+<script src="{% static 'production_data/js/dropdown.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <body>
     <div class="header">
         <h1>QUẢN LÝ DÂY CHUYỀN SẢN XUẤT</h1>
         <div class="user-info">
             {% if user.is_authenticated %}
-                {{ user.username }}
-                |<form action="{% url 'logout' %}" method="post" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" style="background:none; border:none; color:#007bff; cursor:pointer;">
-            Đăng xuất
-        </button>
-    </form>
+                <div class="dropdown">
+                <button class="dropbtn" onclick="toggleDropdown(event, 'userDropdown')">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar">
+                    {% else %}
+                        <img src="{% static 'production_data/images/default-avatar.png' %}" alt="Avatar" class="avatar">
+                    {% endif %}
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-content" id="userDropdown">
+                    <form action="{% url 'logout' %}" method="post" style="margin:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">Đăng xuất</button>
+                    </form>
+                    <div class="dropdown-item"><a href="{% url 'production_setting' %}">Tài khoản</a></div>
+                </div>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -41,4 +52,69 @@
     <!-- Các script bổ sung sẽ được chèn vào đây -->
     {% endblock %}
 </body>
+<style>
+.user-info {
+    position: relative;
+    display: inline-block;
+}
+
+.avatar {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+}
+
+.dropbtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.arrow {
+    font-size: 12px;
+    color: #333;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #fff;
+    min-width: 120px;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.dropdown-content .dropdown-item {
+    width: 100%;
+    padding: 10px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+}
+
+.dropdown-content .dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Khi có class show thì hiển thị */
+.dropdown-content.show {
+    display: block;
+}
+.dropdown-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%;
+}
+</style>
 </html>

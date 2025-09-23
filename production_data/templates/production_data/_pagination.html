@@ -1,0 +1,145 @@
+{% if results.has_other_pages %}
+<nav aria-label="Pagination">
+    <ul class="pagination justify-content-center">
+        <!-- First page link -->
+        {% if results.has_previous %}
+            <li class="page-item">
+                <a class="page-link page-link-ajax" href="#" data-page="1" aria-label="First">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+            <!-- Previous page link -->
+            <li class="page-item">
+                <a class="page-link page-link-ajax" href="#" data-page="{{ results.previous_page_number }}" aria-label="Previous">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-angle-double-left"></i>
+                </span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-angle-left"></i>
+                </span>
+            </li>
+        {% endif %}
+
+        <!-- Page numbers -->
+        {% for num in results.paginator.page_range %}
+            {% if num == results.number %}
+                <li class="page-item active">
+                    <span class="page-link">
+                        {{ num }}
+                        <span class="sr-only">(current)</span>
+                    </span>
+                </li>
+            {% elif num > results.number|add:'-3' and num < results.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link page-link-ajax" href="#" data-page="{{ num }}">{{ num }}</a>
+                </li>
+            {% elif num == 1 %}
+                <li class="page-item">
+                    <a class="page-link page-link-ajax" href="#" data-page="{{ num }}">{{ num }}</a>
+                </li>
+                {% if results.number > 5 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% elif num == results.paginator.num_pages %}
+                {% if results.number < results.paginator.num_pages|add:'-4' %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link page-link-ajax" href="#" data-page="{{ num }}">{{ num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Next page link -->
+        {% if results.has_next %}
+            <li class="page-item">
+                <a class="page-link page-link-ajax" href="#" data-page="{{ results.next_page_number }}" aria-label="Next">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            </li>
+            <!-- Last page link -->
+            <li class="page-item">
+                <a class="page-link page-link-ajax" href="#" data-page="{{ results.paginator.num_pages }}" aria-label="Last">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-angle-right"></i>
+                </span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-angle-double-right"></i>
+                </span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<!-- Page info -->
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted">
+        Hiển thị {{ results.start_index }} - {{ results.end_index }} 
+        trong tổng số {{ results.paginator.count }} kết quả
+    </div>
+    <div class="text-muted">
+        Trang {{ results.number }} / {{ results.paginator.num_pages }}
+    </div>
+</div>
+{% else %}
+<div class="text-center text-muted mt-3">
+    <small>Tổng cộng: {{ results.paginator.count }} kết quả</small>
+</div>
+{% endif %}
+
+<style>
+.pagination .page-link {
+    color: #007bff;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+}
+
+.pagination .page-link:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+</style>

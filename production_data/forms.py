@@ -2,24 +2,14 @@ from django import forms
 from .models import ProductionResult
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from .models import Profile
 
 class ProductionResultForm(forms.ModelForm):
     class Meta:
         model = ProductionResult
-        # Chỉ hiển thị các trường người dùng cần nhập
-        # Các trường tính toán tự động sẽ không cần hiển thị trên form
-        fields = [
-            'date', 'user_input', 'name_of_type',
-            'pc_plan','pro_plan','result', 'pc_diff', 'prod_diff', 'completion_rate',
-            'hour_pc_plan', 'hour_pro_plan', 'hour_actual', 'qty_hour',
-            'po_plan_ref', 'pc_plan_ref_2', 'actuals',
-            'total', 'ng', 'acc_ng', 
-            'input_material', 'output', 'output_before', 'input_actual',
-            'person_standard', 'person_actual', 'person_diff',
-        ]
+        exclude = ['user_input']  # user_input tự động set, không cho nhập tay
         labels = {
             'date': 'Ngày',
-            'user_input': 'Người nhập liệu',
             'name_of_type': 'Mã sản phẩm',
             'pc_plan': 'PC PLAN',
             'pro_plan': 'PRO PLAN',
@@ -38,23 +28,26 @@ class ProductionResultForm(forms.ModelForm):
             'ng': 'NG',
             'acc_ng': 'ACC NG',
             'input_material': 'Input Material',
-            'output': 'Output', 
+            'output': 'Output',
             'output_before': 'Output Before',
             'input_actual': 'Input actual',
             'person_standard': 'Person Standard',
-            'person_actual': 'Person Actual',   
+            'person_actual': 'Person Actual',
             'person_diff': 'Person Diff',
         }
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'user_input': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}), # Có thể làm readonly hoặc ẩn
             'name_of_type': forms.TextInput(attrs={'class': 'form-control'}),
             'pc_plan': forms.NumberInput(attrs={'class': 'form-control'}),
             'pro_plan': forms.NumberInput(attrs={'class': 'form-control'}),
             'result': forms.NumberInput(attrs={'class': 'form-control'}),
             'pc_diff': forms.NumberInput(attrs={'class': 'form-control'}),
             'prod_diff': forms.NumberInput(attrs={'class': 'form-control'}),
-            'completion_rate': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly', 'step': '0.01'}),
+            'completion_rate': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'readonly': 'readonly',
+                'step': '0.01'
+            }),
             'hour_pc_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'hour_pro_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'hour_actual': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
@@ -75,13 +68,36 @@ class ProductionResultForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # lấy user từ kwargs (do view truyền vào)
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        # Nếu là form tạo mới thì set user mặc định
-        if not self.instance.pk and user:
-            self.initial['user_input'] = user.username
+        if user:
+            # Thêm field readonly để hiển thị tên
+            self.fields['người_nhập'] = forms.CharField(
+                initial=user.username,
+                label="Người nhập liệu",
+                disabled=True,
+                required=False
+            )
+            self.user = user
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.user:  # gán user hiện tại
+            instance.user_input = self.user
+        if commit:
+            instance.save()
+        return instance
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['avatar']   # chỉ cho phép upload avatar
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name']
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(
         required=True,

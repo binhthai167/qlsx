@@ -1,0 +1,52 @@
+{% extends 'production_data/base.html' %}
+{% load static %}
+{% block title %}Cài đặt tài khoản{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 class="card-header">Cài đặt tài khoản</h2>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <!-- Hiển thị avatar nếu có -->
+            <div class="mb-3 text-center">
+                {% if user.profile and user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="rounded-circle" width="120" height="120">
+                {% else %}
+                    <img src="{% static 'production_data/images/default-avatar.png' %}" alt="avatar" class="rounded-circle" width="120" height="120">
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <input type="file" class="form-control" name="avatar" id="avatar">
+            </div>
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Tên đăng nhập</label>
+                <input type="text" class="form-control" id="username" value="{{ user.username }}" disabled>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" id="email" value="{{ user.email }}">
+            </div>
+
+            <div class="mb-3">
+                <label for="first_name" class="form-label">Họ</label>
+                <input type="text" class="form-control" name="first_name" id="first_name" value="{{ user.first_name }}">
+            </div>
+
+            <div class="mb-3">
+                <label for="last_name" class="form-label">Tên</label>
+                <input type="text" class="form-control" name="last_name" id="last_name" value="{{ user.last_name }}">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Đổi mật khẩu</label>
+                <input type="password" class="form-control" name="password" id="password" placeholder="Nhập mật khẩu mới">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

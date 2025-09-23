@@ -11,7 +11,10 @@
             <input type="date" id="date" name="date" 
                    value="{{ date_filter|default:'' }}" 
                    class="form-control form-control-sm">
-            <input type="text" id="name_of_type" class="form-control form-control-sm" 
+            <input type="text" id="name_of_type" 
+                    name="name_of_type"
+                    value="{{ name_filter|default:'' }}"
+                    class="form-control form-control-sm" 
                     placeholder="Nhập model...">
             <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
             <a href="{% url 'production_results_list' %}" class="btn btn-secondary btn-sm">Reset</a>
@@ -147,7 +150,7 @@
                         </th>
                         <th>
                             <a href="?sort=difference&dir={% if sort == 'difference' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                BLANCE
+                                BaLANCE
                                 {% if sort == 'difference' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
@@ -231,7 +234,7 @@
             <ul class="pagination">
                 {% if results.has_previous %}
                     <li class="page-item"><a class="page-link" href="?page=1{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">&laquo; First</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ results.previous_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ results.previous_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">«</a></li>
                 {% endif %}
 
                 {% for num in results.paginator.page_range %}
@@ -243,7 +246,7 @@
                 {% endfor %}
 
                 {% if results.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ results.next_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ results.next_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">»</a></li>
                     <li class="page-item"><a class="page-link" href="?page={{ results.paginator.num_pages }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Last &raquo;</a></li>
                 {% endif %}
             </ul>

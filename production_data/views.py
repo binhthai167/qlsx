@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages # Để hiển thị thông báo thành công/lỗi
 from .forms import ProductionResultForm
-from .models import ProductionResult
+from .models import ProductionResult, Profile
 from django.db.models import Sum, F, ExpressionWrapper, DecimalField # Để tính tổng và tham chiếu trường
 from django.utils import timezone
 import json
@@ -19,6 +19,10 @@ from .forms import SignUpForm
 from django.contrib.auth.decorators import permission_required
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+from django.contrib import messages
+from .forms import ProfileForm, UserUpdateForm
+from django.contrib.auth import update_session_auth_hash
+
 
 
 
@@ -74,7 +78,7 @@ def production_results_list(request):
         results = results.filter(name_of_type__icontains=name_filter)
      # Sort dữ liệu
     sort = request.GET.get('sort', 'date')  # default sort by date
-    dir = request.GET.get('dir', 'asc')     # default ascending
+    dir = request.GET.get('dir', 'desc')     # default ascending
     valid_fields = [f.name for f in ProductionResult._meta.fields]  # tất cả field model
     if sort in valid_fields:
         if dir == 'desc':
@@ -82,7 +86,7 @@ def production_results_list(request):
         results = results.order_by(sort)
 
      # Phân trang, mỗi trang 10 mục mặc định
-    paginator = Paginator(results, 10)  
+    paginator = Paginator(results, 20)  
     page_number = request.GET.get('page')
     results = paginator.get_page(page_number)
 
@@ -99,6 +103,7 @@ def production_results_list(request):
     }
     return render(request, 'production_data/production_results_list.html', context)
 
+@login_required
 def production_result_detail(request, pk):
     result = get_object_or_404(ProductionResult, pk=pk)
     context = {
@@ -110,7 +115,7 @@ def production_result_detail(request, pk):
 def production_result_update(request, pk):
     result = get_object_or_404(ProductionResult, pk=pk)
     if request.method == 'POST':
-        form = ProductionResultForm(request.POST, instance=result)
+        form = ProductionResultForm(request.POST, instance=result, user=request.user)  # Truyền user hiện tại vào form
         if form.is_valid():
             form.save()
             messages.success(request, 'Dữ liệu đã được cập nhật thành công!')
@@ -139,7 +144,7 @@ def production_result_delete(request, pk):
     }
     return render(request, 'production_data/production_result_confirm_delete.html', context)
 
-
+@login_required
 # @permission_required('production_data.view_productionresult', raise_exception=True)
 def production_report(request):
     # Lấy các tham số lọc từ request
@@ -218,6 +223,7 @@ def production_report(request):
     # Tính tổng cho bảng tóm tắt
     grand_totals = filtered_results.aggregate(
         overall_total_pc_plan=Sum('pc_plan'),
+        overall_total_pro_plan=Sum('pro_plan'),
         overall_total_result=Sum('result'),
         overall_total_prod_diff=Sum('prod_diff'),
         overall_total_hour_pc_plan=Sum('hour_pc_plan'),
@@ -319,21 +325,91 @@ def production_setting(request):
     }
     return render(request, 'production_data/production_setting.html', context)
 
-
 def ajax_filter_results(request):
+    # Lấy tham số từ yêu cầu
     name_filter = request.GET.get("name_of_type", "").strip()
     date_filter = request.GET.get("date", "")
+    sort = request.GET.get("sort", "date")
+    dir = request.GET.get("dir", "asc")
+    page = request.GET.get("page", 1)
 
+    # Lấy dữ liệu
     results = ProductionResult.objects.all()
 
+    # Lọc
     if name_filter:
         results = results.filter(name_of_type__icontains=name_filter)
     if date_filter:
-        results = results.filter(date=date_filter)
+        try:
+            from datetime import datetime
+            date_obj = datetime.strptime(date_filter, "%Y-%m-%d").date()
+            results = results.filter(date=date_obj)
+        except ValueError:
+            # Nếu ngày không hợp lệ, trả về dữ liệu rỗng
+            results = results.none()
 
-    # phân trang lại nếu cần
+    # Sắp xếp
+    if sort:
+        if dir == "desc":
+            sort = f"-{sort}"
+        results = results.order_by(sort)
+
+    # Phân trang
+    paginator = Paginator(results, 10)  # 10 bản ghi mỗi trang
+    page_obj = paginator.get_page(page)
+
+    # Debug: In dữ liệu để kiểm tra
+
+
+    # Render HTML cho tbody và phân trang
     context = {
-        "results": results,
+        "results": page_obj,
+        "date_filter": date_filter,
+        "name_filter": name_filter,
+        "sort": sort.lstrip("-"),
+        "dir": dir,
     }
     html = render_to_string("production_data/_results_table_body.html", context, request=request)
-    return JsonResponse({"html": html})
+    # pagination_html = render_to_string("production_data/_pagination.html", context, request=request)
+
+    return JsonResponse({
+        "html": html,
+        # "pagination": pagination_html
+    })
+
+@login_required
+def production_setting(request):
+    user = request.user
+    profile, created = Profile.objects.get_or_create(user=user)
+    
+    if request.method == 'POST':
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+
+        if profile_form.is_valid():
+            # Lưu avatar
+            profile_form.save()
+
+            # Cập nhật thông tin user cơ bản
+            user.email = request.POST.get('email', user.email)
+            user.first_name = request.POST.get('first_name', user.first_name)
+            user.last_name = request.POST.get('last_name', user.last_name)
+
+            # Nếu có mật khẩu mới thì đổi mật khẩu
+            new_password = request.POST.get('password', None)
+            if new_password:
+                user.set_password(new_password)
+
+            user.save()
+
+            messages.success(request, "Cập nhật tài khoản thành công!")
+            return redirect('production_setting')  # reload lại trang
+        else:
+            messages.error(request, "Có lỗi xảy ra, vui lòng kiểm tra lại.")
+    else:
+        profile_form = ProfileForm(instance=profile)
+
+    context = {
+        'profile_form': profile_form,
+        'user': user,
+    }
+    return render(request, 'production_data/production_settings.html', context)

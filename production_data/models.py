@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.utils import timezone # Để sử dụng timezone.now cho trường ngày tháng
 
 class ProductionResult(models.Model):
@@ -6,7 +7,7 @@ class ProductionResult(models.Model):
     # Sử dụng CharField cho date để dễ dàng hiển thị theo format DD/MM/YYYY trên form nếu cần,
     # hoặc DateField nếu bạn muốn lưu trữ dạng ngày tháng thực sự và validate
     date = models.DateField(default=timezone.now, verbose_name="Ngày")
-    user_input = models.CharField(max_length=100, default="TUYẾT-13749", verbose_name="Người nhập liệu") # Có thể làm khóa ngoại tới User model sau này
+    user_input = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Người nhập liệu") # Có thể làm khóa ngoại tới User model sau này
 
     line = models.CharField(max_length=50, blank=True, null=True, verbose_name="LINE") # Ví dụ: NSAA01, NSKA01
     group = models.CharField(max_length=50, blank=True, null=True, verbose_name="GROUP") # Ví dụ: MDU-11, MDU-13
@@ -34,7 +35,7 @@ class ProductionResult(models.Model):
     po_plan_ref = models.IntegerField(verbose_name="PO PLAN-REF", blank=True, null=True) # Có thể tính toán tự động
     pc_plan_ref_2 = models.IntegerField(verbose_name="PC PLAN REF 2", blank=True, null=True) # Có thể tính toán tự động
     actuals = models.IntegerField(verbose_name="Kết quả (Actuals)", blank=True, null=True) # Có thể tính toán tự động
-    difference = models.IntegerField(verbose_name="Chênh lệch", blank=True, null=True) # Có thể tính toán tự động
+    difference = models.IntegerField(verbose_name="Balance", blank=True, null=True) # Có thể tính toán tự động
     plan_percentage = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Đạt tỉ lệ (%) (Plan)", blank=True, null=True) # Có thể tính toán tự động
     total = models.IntegerField(verbose_name="TOTAL", blank=True, null=True) # Có thể tính toán tự động
     acc_ng = models.IntegerField(verbose_name="ACC NG", blank=True, null=True) # Có thể tính toán tự động
@@ -78,3 +79,9 @@ class ProductionResult(models.Model):
                 self.completion_rate = 0.00 # Tránh chia cho 0
         super().save(*args, **kwargs)
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
