@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'production_data',
     'widget_tweaks',
+    'import_export',
 ]
 
 

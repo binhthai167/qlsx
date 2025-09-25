@@ -14,7 +14,7 @@
             <input type="date" id="id_end_date" name="end_date" value="{{ end_date }}" style="width: 130px; padding: 3px; font-size: 0.9rem;">
         </div>
         <div style="margin-top: 5px; display: flex; gap: 5px;">
-            <button class="btn btn-primary type="submit" style="padding: 3px 8px; font-size: 0.85rem;">Lọc</button>
+            <button class="btn btn-primary" type="submit" style="padding: 3px 8px; font-size: 0.85rem;">Lọc</button>
             <a class="btn btn-secondary" href="{% url 'production_report' %}" style="padding: 3px 8px; font-size: 0.85rem; text-decoration: none; border: 1px solid #ccc; border-radius: 3px; background: #eee; color: #000;">Reset</a>
         </div>
     </form>
@@ -34,8 +34,8 @@
         <p style="margin: 5px 0 0; font-size: 1.5rem; font-weight: bold; color: #dc3545;">{{ grand_totals.overall_total_result|default:0 }}</p>
     </div>
         <div class="kpi-card" style="background: #f8f9fa; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; min-width: 200px; text-align: center;">
-        <h4 style="margin: 0; font-size: 1rem; color: #6c757d;">Tổng Result</h4>
-        <p style="margin: 5px 0 0; font-size: 1.5rem; font-weight: bold; color: #dc3545;">{{ grand_totals.overall_total_result|default:0 }}</p>
+        <h4 style="margin: 0; font-size: 1rem; color: #6c757d;">Tổng Giờ chênh lệch</h4>
+        <p style="margin: 5px 0 0; font-size: 1.5rem; font-weight: bold; color: #b9ab2e;">{{ grand_totals.overall_total_hour_prod_diff|default:0 }}</p>
     </div>
 </div>
     <!-- Biểu đồ và bảng -->
@@ -76,9 +76,9 @@
                 <tr>
                     <td>{{ item.date|date:"d/m/Y" }}</td>
                     <td>{{ item.total_pc_plan|default:0 }}</td>
+                    <td>{{ item.total_pro_plan|default:0 }}</td>
                     <td>{{ item.total_result|default:0 }}</td>
                     <td>{{ item.total_pc_diff|default:0 }}</td>
-                    <td>{{ item.total_prod_diff|default:0 }}</td>
                     <td>{{ item.total_prod_diff|default:0 }}</td>
                     <td class=" {% if item.avg_completion_rate >= 100 %} rate-high {% elif item.avg_completion_rate >= 80 %} rate-medium {% else %} rate-low {% endif %} ">
                         {{ item.avg_completion_rate|floatformat:2|default:"N/A" }}%
@@ -87,7 +87,7 @@
                     <td>{{ item.total_hour_pro_plan|default:0 }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4">Không có dữ liệu.</td></tr>
+                <tr><td colspan="9">Không có dữ liệu.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -575,6 +575,12 @@ document.addEventListener('DOMContentLoaded', function() {
 // Chạy khi hash thay đổi (người dùng click phân trang)
 window.addEventListener("hashchange", function() {
     showTableByHash(window.location.hash);
+
+    // Cuộn tới phần biểu đồ
+    const chartSection = document.getElementById("chart-section");
+    if (chartSection) {
+        chartSection.scrollIntoView({ behavior: "smooth" });
+    }
 });
 
 let hash = window.location.hash;

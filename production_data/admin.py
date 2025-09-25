@@ -1,12 +1,23 @@
 from django.contrib import admin
 from .models import ProductionResult
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 
+
+# Resource ngay trong admin.py
+class ProductionResultResource(resources.ModelResource):
+    class Meta:
+        model = ProductionResult
+        # có thể thêm exclude nếu muốn bỏ bớt cột:
+        # exclude = ('id', 'created_at', 'updated_at')
+        # hoặc chỉ định field cụ thể:
+        # fields = ('date', 'user_input', 'name_of_type', 'pc_plan', 'actuals')
 @admin.register(ProductionResult)
-class ProductionResultAdmin(admin.ModelAdmin):
+class ProductionResultAdmin(ImportExportModelAdmin):
     list_display = (
-        'date', 'user_input', 'name_of_type', 'pc_plan', 'pro_plan', 'result',
-        'prod_diff', 'completion_rate', 'hour_actual', 'actuals', 'difference',
-        'total', 'ng', 'acc_ng'
+        'date', 'user_input', 'name_of_type', 'pc_plan', 'pro_plan', 'result', 'pc_diff',
+        'prod_diff', 'completion_rate', 'hour_pc_plan', 'hour_pro_plan', 'hour_actual', 'qty_hour', 'difference',
+        'po_plan_ref', 'pc_plan_ref_2', 'actuals', 'difference', 'ng', 'plan_percentage', 'created_at', 'updated_at'
     )
     list_filter = ('date', 'user_input', 'name_of_type')
     search_fields = ('name_of_type', 'user_input')

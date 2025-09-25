@@ -100,7 +100,7 @@ class UserUpdateForm(forms.ModelForm):
         fields = ['email', 'first_name', 'last_name']
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(
-        required=True,
+        required=False,
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
     )
 

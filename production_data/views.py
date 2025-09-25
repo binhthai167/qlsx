@@ -177,6 +177,7 @@ def production_report(request):
     daily_production_summary = filtered_results.values('date').annotate(
         total_result=Sum('result'),
         total_pc_plan=Sum('pc_plan'),
+        total_pro_plan=Sum('pro_plan'),
         total_pc_diff=Sum('pc_diff'),
         total_prod_diff=Sum('prod_diff'),
         total_person_diff=Sum('person_diff', output_field=IntegerField()),
