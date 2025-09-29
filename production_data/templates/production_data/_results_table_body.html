@@ -1,65 +1,57 @@
-<tbody>
-    {% for result in results %}
-        <tr>
-            <td>{{ result.date|date:"d/m/Y" }}</td>
-            <td class="highlight"> <a href="{% url 'production_result_detail' pk=result.pk %}">{{ result.name_of_type }} </a></td>
-            <td>{{ result.pc_plan }}</td>
-            <td>{{ result.pro_plan }}</td>
-            <td>{{ result.result }}</td>
-            <td>{{ result.pc_diff|default:"N/A" }}</td>
-            <td>{{ result.prod_diff|default:"N/A" }}</td>
-            <td class="
-                {% if result.completion_rate >= 100 %}
-                    rate-high
-                {% elif result.completion_rate >= 80 %}
-                    rate-medium
-                {% else %}
-                    rate-low
-                {% endif %}
-            ">
-                {{ result.completion_rate|floatformat:2|default:"N/A" }}%
-            </td>
-            <td>{{ result.hour_pc_plan|floatformat:2 }}</td>
-            <td>{{ result.hour_pro_plan|floatformat:2 }}</td>
-            <td>{{ result.hour_actual|floatformat:2 }}</td>
-            <td>{{ result.qty_hour }}</td>
-            <td>{{ result.po_plan_ref }}</td>
-            <td>{{ result.pc_plan_ref_2 }}</td>
-            <td>{{ result.actuals }}</td>
-            <td class="
-                {% if result.difference < 0 %}
-                    diff-negative
-                {% elif result.difference > 0 %}
-                    diff-positive
-                {% else %}
-                    diff-zero
-                {% endif %}
-            ">
-                {{ result.difference|default:"0" }}
-            </td>
-            <td>{{ result.input_material }}</td>
-            <td>{{ result.output }}</td>
-            <td>{{ result.output_before }}</td>
-            <td>{{ result.ng }}</td>
-            <td>{{ result.input_actual }}</td>
-            <td>{{ result.person_standard }}</td>
-            <td>{{ result.person_actual }}</td>
-            <td>{{ result.person_diff }}</td>
-            <td class="table-actions">
-                <a href="{% url 'production_result_detail' pk=result.pk %}" class="action-link text-info" title="Xem">👁️</a>
-                <a href="{% url 'production_result_update' pk=result.pk %}" class="action-link text-primary" title="Sửa">✏️</a>
-                <a href="{% url 'production_result_delete' pk=result.pk %}" class="action-link text-danger" title="Xóa">🗑️</a>
-            </td>
-        </tr>
-    {% endfor %}
-</tbody>
-<style>
-    .highlight a {
-        font-weight: bold;
-        color: #2c3e50;
-        text-decoration: none;
-    }
-    .highlight a:hover {
-        text-decoration: underline;
-    }
-</style>
+{% for result in results %}
+    <tr>
+        <td>{{ result.date |date:"d/m/Y" }}</td>
+        <td>{{ result.product_model.code }}</td> {# Giả định bạn truy cập code #}
+        <td>{{ result.pc_plan }}</td>
+        <td>{{ result.pro_plan }}</td>
+        <td>{{ result.result }}</td>
+        <td>{{ result.pc_diff }}</td>
+        <td>{{ result.prod_diff }}</td>
+        <td class="
+            {% if result.completion_rate >= 100 %}
+                rate-high
+            {% elif result.completion_rate >= 80 %}
+                rate-medium
+            {% else %}
+                rate-low
+            {% endif %}
+        ">
+            {{ result.completion_rate|floatformat:2|default:"N/A" }}%
+        </td>
+        <td>{{ result.hour_pc_plan }}</td>
+        <td>{{ result.hour_pro_plan }}</td>
+        <td>{{ result.hour_actual }}</td>
+        <td>{{ result.qty_hour }}</td>
+        <td>{{ result.po_plan_ref }}</td>
+        <td>{{ result.pc_plan_ref_2 }}</td>
+        <td>{{ result.actuals }}</td>
+        <td class="
+            {% if result.difference < 0 %}
+                diff-negative
+            {% elif result.difference > 0 %}
+                diff-positive
+            {% else %}
+                diff-zero
+            {% endif %}
+        ">
+            {{ result.difference|default:"0" }}
+        </td>
+        <td>{{ result.input_material }}</td>
+        <td>{{ result.output }}</td>
+        <td>{{ result.output_before }}</td>
+        <td>{{ result.ng }}</td>
+        <td>{{ result.input_actual }}</td>
+        <td>{{ result.person_standard }}</td>
+        <td>{{ result.person_actual }}</td>
+        <td>{{ result.person_diff }}</td>
+        <td>
+            <a href="{% url 'production_result_detail' result.pk %}" class="btn btn-info btn-sm">Xem</a>
+            <a href="{% url 'production_result_update' result.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+            <a href="{% url 'production_result_delete' result.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+        </td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="25">Không có kết quả nào.</td>
+    </tr>
+{% endfor %}

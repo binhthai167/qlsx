@@ -16,6 +16,7 @@ urlpatterns = [
     path('delete/<int:pk>/', views.production_result_delete, name='production_result_delete'), # Xóa
     path('report/', views.production_report, name='production_report'), # Trang báo cáo/thống kê
     path('setting/', views.production_setting, name='production_setting'), # Trang setting
+    path('ajax/load-product-models/', views.load_product_models, name='ajax_load_product_models'),
 ]
 
 if settings.DEBUG:

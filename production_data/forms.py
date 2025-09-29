@@ -1,43 +1,22 @@
 from django import forms
-from .models import ProductionResult
+from .models import ProductionResult,ProductModel, ProductGroup
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
 
 class ProductionResultForm(forms.ModelForm):
+    group_model = forms.ModelChoiceField(
+        queryset=ProductGroup.objects.all(),
+        required=False,
+        label="Nhóm Model",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     class Meta:
         model = ProductionResult
         exclude = ['user_input']  # user_input tự động set, không cho nhập tay
-        labels = {
-            'date': 'Ngày',
-            'name_of_type': 'Mã sản phẩm',
-            'pc_plan': 'PC PLAN',
-            'pro_plan': 'PRO PLAN',
-            'result': 'RESULT',
-            'pc_diff': 'PC 差異 (Chênh lệch)',
-            'prod_diff': 'PROD 差異 (Chênh lệch)',
-            'completion_rate': 'Đạt tỉ lệ (%)',
-            'hour_pc_plan': 'HOUR PC PLAN',
-            'hour_pro_plan': 'HOUR PRO',
-            'hour_actual': 'HOUR Thực lĩnh',
-            'qty_hour': 'OUT HOUR',
-            'po_plan_ref': 'PO PLAN-REF',
-            'pc_plan_ref_2': 'PC PLAN REF 2',
-            'actuals': 'Kết quả (Actuals)',
-            'total': 'TOTAL',
-            'ng': 'NG',
-            'acc_ng': 'ACC NG',
-            'input_material': 'Input Material',
-            'output': 'Output',
-            'output_before': 'Output Before',
-            'input_actual': 'Input actual',
-            'person_standard': 'Person Standard',
-            'person_actual': 'Person Actual',
-            'person_diff': 'Person Diff',
-        }
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'name_of_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'product_model': forms.Select(attrs={'class': 'form-control'}),
             'pc_plan': forms.NumberInput(attrs={'class': 'form-control'}),
             'pro_plan': forms.NumberInput(attrs={'class': 'form-control'}),
             'result': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -64,15 +43,30 @@ class ProductionResultForm(forms.ModelForm):
             'input_actual': forms.NumberInput(attrs={'class': 'form-control'}),
             'person_standard': forms.NumberInput(attrs={'class': 'form-control'}),
             'person_actual': forms.NumberInput(attrs={'class': 'form-control'}),
-            'person_diff': forms.NumberInput(attrs={'class': 'form-control'}),
+            'person_diff': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        self.fields['product_model'].queryset = ProductModel.objects.none()
+        if self.instance and self.instance.product_model:
+            pm = self.instance.product_model
+            if pm.group_model:
+                self.fields['group_model'].initial = pm.group_model
+                self.fields['product_model'].queryset = ProductModel.objects.filter(group_model=pm.group_model).order_by('code')
+            else:
+                self.fields['product_model'].queryset = ProductModel.objects.filter(pk=pm.pk)
 
+        # Nếu là POST (submit) và người dùng đã chọn group_model -> lọc product_model theo group đó
+        if 'group_model' in self.data:
+            try:
+                group_id = int(self.data.get('group_model'))
+                self.fields['product_model'].queryset = ProductModel.objects.filter(group_model_id=group_id).order_by('code')
+            except (ValueError, TypeError):
+                pass
+            
         if user:
-            # Thêm field readonly để hiển thị tên
             self.fields['người_nhập'] = forms.CharField(
                 initial=user.username,
                 label="Người nhập liệu",
@@ -80,10 +74,12 @@ class ProductionResultForm(forms.ModelForm):
                 required=False
             )
             self.user = user
+            # đưa "người_nhập" lên đầu form
+            self.order_fields(['người_nhập'] + list(self.fields.keys()))
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        if self.user:  # gán user hiện tại
+        if hasattr(self, 'user'):
             instance.user_input = self.user
         if commit:
             instance.save()

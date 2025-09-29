@@ -2,6 +2,45 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone # Để sử dụng timezone.now cho trường ngày tháng
 
+
+class Line(models.Model):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã Line")
+    name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tên Line")
+
+    def __str__(self):
+        return self.code
+class ProductModel(models.Model):
+    code = models.CharField(max_length=255, unique=True, verbose_name="Mã Model")
+    name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tên Model")
+    group_model = models.ForeignKey('ProductGroup', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Nhóm Model")
+
+    def __str__(self):
+        return self.code
+    
+class Group(models.Model):
+    code = models.CharField(max_length=50, verbose_name="Mã Group")  # VD: MDU-11
+    name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tên Group")
+
+    def __str__(self):
+        return f"{self.code} - {self.line.code}"
+
+class Shift(models.Model):
+    line = models.ForeignKey(Line, on_delete=models.CASCADE, related_name="shifts")
+    name = models.CharField(max_length=50, verbose_name="Ca")  # VD: 1st, 2nd, 3rd
+    start_time = models.TimeField(blank=True, null=True)
+    end_time = models.TimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.line.code})"
+    
+class ProductGroup(models.Model):
+    code = models.CharField(max_length=50, unique=True, verbose_name="Mã nhóm model")
+    name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tên nhóm")
+
+    def __str__(self):
+        return self.code
+
+
 class ProductionResult(models.Model):
     # Thông tin chung
     # Sử dụng CharField cho date để dễ dàng hiển thị theo format DD/MM/YYYY trên form nếu cần,
@@ -9,11 +48,12 @@ class ProductionResult(models.Model):
     date = models.DateField(default=timezone.now, verbose_name="Ngày")
     user_input = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Người nhập liệu") # Có thể làm khóa ngoại tới User model sau này
 
-    line = models.CharField(max_length=50, blank=True, null=True, verbose_name="LINE") # Ví dụ: NSAA01, NSKA01
-    group = models.CharField(max_length=50, blank=True, null=True, verbose_name="GROUP") # Ví dụ: MDU-11, MDU-13
-    shift = models.CharField(max_length=50, blank=True, null=True, verbose_name="SHIFT") # Ví dụ: 1st, 3rd
+    line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name="Line", null=True, blank=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, verbose_name="Ca", null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, verbose_name="Group", null=True, blank=True)
+    product_model = models.ForeignKey(ProductModel, on_delete=models.CASCADE, verbose_name="Model", null=True, blank=True)
 
-    name_of_type = models.CharField(max_length=255, verbose_name="Mã sản phẩm (MODEL)") # Đổi verbose_name cho rõ hơn
+   
 
     # (Yesterday PLN/RSLT)
     pc_plan = models.IntegerField(verbose_name="PC PLAN", null=True, blank=True) # Trường mới
@@ -61,10 +101,11 @@ class ProductionResult(models.Model):
     class Meta:
         verbose_name = "Kết quả Sản xuất"
         verbose_name_plural = "Kết quả Sản xuất"
-        ordering = ['-date', 'name_of_type'] # Sắp xếp mặc định
+        ordering = ['-date', 'product_model__code'] # Sắp xếp mặc định
 
     def __str__(self):
-        return f"{self.name_of_type} - {self.date.strftime('%d/%m/%Y')} bởi {self.user_input}"
+        return f"{self.product_model.code} - {self.date.strftime('%d/%m/%Y')} bởi {self.user_input or 'N/A'}"
+
 
     # Bạn có thể thêm các phương thức tính toán tự động ở đây
     def save(self, *args, **kwargs):

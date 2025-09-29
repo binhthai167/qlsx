@@ -5,216 +5,193 @@
 <div class="card">
     <h2 class="card-header">Danh sách Kết quả Sản xuất</h2>
 
-    <!-- Form lọc -->
-    <form method="get" class="filter-form">
+    <form id="filter-sort-form" method="get" class="filter-form">
+        <input type="hidden" name="sort" id="sort-field" value="{{ sort }}">
+        <input type="hidden" name="dir" id="sort-direction" value="{{ dir }}">
         <div class="filter-group">
             <input type="date" id="date" name="date" 
-                   value="{{ date_filter|default:'' }}" 
-                   class="form-control form-control-sm">
-            <input type="text" id="name_of_type" 
-                    name="name_of_type"
+                    value="{{ date_filter|default:'' }}" 
+                    class="form-control form-control-sm">
+            <input type="text" id="product_model" 
+                    name="product_model"
                     value="{{ name_filter|default:'' }}"
                     class="form-control form-control-sm" 
                     placeholder="Nhập model...">
-            <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
+            <button type="submit" class="btn btn-primary btn-sm" id="filter-btn">Lọc</button>
             <a href="{% url 'production_results_list' %}" class="btn btn-secondary btn-sm">Reset</a>
         </div>
     </form>
-    <style>
-    </style>
-
+    
     {% if results %}
         <div class="table-container">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>
-                            <a href="?sort=date&dir={% if sort == 'date' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                        <th class="sortable" data-sort="date">
+                            <a href="#">
                                 Ngày
                                 {% if sort == 'date' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=name_of_type&dir={% if sort == 'name_of_type' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
+                        <th class="sortable" data-sort="product_model">
+                            <a href="#">
                                 NAME OF TYPE
-                                {% if sort == 'name_of_type' %}
+                                {% if sort == 'product_model' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=pc_plan&dir={% if sort == 'pc_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                PC PLAN
+                        <th class="sortable" data-sort="pc_plan">
+                             <a href="#">PC PLAN
                                 {% if sort == 'pc_plan' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=pro_plan&dir={% if sort == 'pro_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                PRO PLAN
+                        <th class="sortable" data-sort="pro_plan">
+                            <a href="#">PRO PLAN
                                 {% if sort == 'pro_plan' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=result&dir={% if sort == 'result' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                RESULT
+                             <th class="sortable" data-sort="result">
+                            <a href="#">RESULT
                                 {% if sort == 'result' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                         <th>
-                            <a href="?sort=pc_diff&dir={% if sort == 'pc_diff' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                PC 差異
+                        <th class="sortable" data-sort="pc_diff">
+                            <a href="#">PC 差異
                                 {% if sort == 'pc_diff' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=prod_diff&dir={% if sort == 'prod_diff' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                PROD 差異
+                        <th class="sortable" data-sort="prod_diff">
+                            <a href="#">PROD 差異
                                 {% if sort == 'prod_diff' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=completion_rate&dir={% if sort == 'completion_rate' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                達成率(%)
+                        <th class="sortable" data-sort="completion_rate">
+                            <a href="#">達成率(%)
                                 {% if sort == 'completion_rate' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=hour_pc_plan&dir={% if sort == 'hour_pc_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                HOUR PC PLAN
+                        <th class="sortable" data-sort="hour_pc_plan">
+                            <a href="#">HOUR PC PLAN
                                 {% if sort == 'hour_pc_plan' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=hour_pro_plan&dir={% if sort == 'hour_pro_plan' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                HOUR PRO PLAN
+                        <th class="sortable" data-sort="hour_pro_plan">
+                            <a href="#">HOUR PRO PLAN
                                 {% if sort == 'hour_pro_plan' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                           <th>
-                            <a href="?sort=hour_actual&dir={% if sort == 'hour_actual' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                HOUR
+                        <th class="sortable" data-sort="hour_actual">
+                            <a href="#">HOUR
                                 {% if sort == 'hour_actual' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=qty_hour&dir={% if sort == 'qty_hour' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                QTY/HOUR
+                        <th class="sortable" data-sort="qty_hour">
+                            <a href="#">QTY/HOUR
                                 {% if sort == 'qty_hour' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=po_plan_ref&dir={% if sort == 'po_plan_ref' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                PC PLAN-REF 26 (total)
+                        <th class="sortable" data-sort="po_plan_ref">
+                            <a href="#">PC PLAN-REF 26 (total)
                                 {% if sort == 'po_plan_ref' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=pc_plan_ref_2&dir={% if sort == 'pc_plan_ref_2' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                PC PLAN REF 26
+                        <th class="sortable" data-sort="pc_plan_ref_2">
+                            <a href="#">PC PLAN REF 26
                                 {% if sort == 'pc_plan_ref_2' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=actuals&dir={% if sort == 'actuals' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                実績RSLT
+                        <th class="sortable" data-sort="actuals">
+                            <a href="#">実績RSLT
                                 {% if sort == 'actuals' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=difference&dir={% if sort == 'difference' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                BaLANCE
+                        <th class="sortable" data-sort="difference">
+                            <a href="#">BaLANCE
                                 {% if sort == 'difference' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=input_material&dir={% if sort == 'input_material' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                INPUT
+                        <th class="sortable" data-sort="input_material">
+                            <a href="#">INPUT
                                 {% if sort == 'input_material' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=output&dir={% if sort == 'output' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                OUTPUT AFTER
+                        <th class="sortable" data-sort="output">
+                            <a href="#">OUTPUT AFTER
                                 {% if sort == 'output' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=output_before&dir={% if sort == 'output_before' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                OUTPUT BEFORE
+                        <th class="sortable" data-sort="output_before">
+                            <a href="#">OUTPUT BEFORE
                                 {% if sort == 'output_before' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=ng&dir={% if sort == 'ng' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                NG
+                        <th class="sortable" data-sort="ng">
+                            <a href="#">NG
                                 {% if sort == 'ng' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=input_actual&dir={% if sort == 'input_actual' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                INPUT THUC TE
+                        <th class="sortable" data-sort="input_actual">
+                            <a href="#">INPUT THUC TE
                                 {% if sort == 'input_actual' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=person_standard&dir={% if sort == 'person_standard' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                Chuẩn Người
+                        <th class="sortable" data-sort="person_standard">
+                            <a href="#">Chuẩn Người
                                 {% if sort == 'person_standard' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=person_actual&dir={% if sort == 'person_actual' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                Thực tế
+                        <th class="sortable" data-sort="person_actual">
+                            <a href="#">Thực tế
                                 {% if sort == 'person_actual' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="?sort=person_diff&dir={% if sort == 'person_diff' and dir == 'asc' %}desc{% else %}asc{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">
-                                Sai Biệt
+                        <th class="sortable" data-sort="person_diff">
+                            <a href="#">Sai Biệt
                                 {% if sort == 'person_diff' %}
                                     {% if dir == 'asc' %}▲{% else %}▼{% endif %}
                                 {% endif %}
@@ -228,33 +205,109 @@
                 </tbody>
             </table>
         </div>
-        <!-- Phân trang -->
-        {% if results.paginator.num_pages > 1 %}
-        <div class="pagination mt-3 d-flex justify-content-center">
-            <ul class="pagination">
-                {% if results.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page=1{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">&laquo; First</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ results.previous_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">«</a></li>
-                {% endif %}
-
-                {% for num in results.paginator.page_range %}
-                    {% if num == results.number %}
-                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                    {% elif num >= results.number|add:-2 and num <= results.number|add:2 %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">{{ num }}</a></li>
-                    {% endif %}
-                {% endfor %}
-
-                {% if results.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ results.next_page_number }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">»</a></li>
-                    <li class="page-item"><a class="page-link" href="?page={{ results.paginator.num_pages }}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if name_filter %}&name_of_type={{ name_filter }}{% endif %}">Last &raquo;</a></li>
-                {% endif %}
-            </ul>
+        <div id="pagination-container">
+            {% include "production_data/_pagination.html" %}
         </div>
-        {% endif %}
-
     {% else %}
         <p>Chưa có dữ liệu sản xuất nào được nhập.</p>
     {% endif %}
 </div>
-{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // URL của view hiện tại (ví dụ: /production/list/)
+    const listUrl = "{% url 'production_results_list' %}";
+
+    // Hàm chung để thực hiện yêu cầu AJAX
+    function loadResults(page, sortField, sortDir) {
+        // Lấy giá trị lọc từ form
+        const dateFilter = $('#date').val();
+        const nameFilter = $('#product_model').val();
+
+        // Xây dựng chuỗi truy vấn (query string)
+        const params = new URLSearchParams();
+        if (page) params.set('page', page);
+        if (sortField) params.set('sort', sortField);
+        if (sortDir) params.set('dir', sortDir);
+        if (dateFilter) params.set('date', dateFilter);
+        if (nameFilter) params.set('product_model', nameFilter);
+
+        // Hiển thị trạng thái tải (tùy chọn)
+        $('#results-body').html('<tr><td colspan="25">Đang tải...</td></tr>');
+        $('#pagination-container').html('<p class="text-center">Đang tải...</p>');
+
+
+        $.ajax({
+            url: listUrl,
+            data: params.toString(),
+            type: 'GET',
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest' // Dấu hiệu để Django View biết là AJAX
+            },
+            success: function(response) {
+                // Thay thế nội dung bảng và phân trang
+                $('#results-body').html(response.html_table);
+                $('#pagination-container').html(response.html_pagination);
+                
+                // Cập nhật URL trong trình duyệt (sử dụng History API)
+                history.pushState(null, '', '?' + params.toString());
+            },
+            error: function(xhr, status, error) {
+                console.error("Lỗi tải dữ liệu:", error);
+                $('#results-body').html('<tr><td colspan="25" class="text-danger">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>');
+                $('#pagination-container').empty();
+            }
+        });
+    }
+
+    // Xử lý sự kiện phân trang (click vào các link trong div#pagination-container)
+    // Sử dụng event delegation vì các link này được tải lại sau mỗi lần AJAX
+    $(document).on('click', '.ajax-page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        const currentSort = $('#sort-field').val();
+        const currentDir = $('#sort-direction').val();
+        loadResults(page, currentSort, currentDir);
+    });
+
+    // Xử lý sự kiện lọc (submit form hoặc click nút Lọc)
+    $('#filter-sort-form').on('submit', function(e) {
+        e.preventDefault();
+        const currentSort = $('#sort-field').val();
+        const currentDir = $('#sort-direction').val();
+        loadResults(1, currentSort, currentDir); // Lọc sẽ trở về trang 1
+    });
+
+    // Xử lý sự kiện Sắp xếp (click vào tiêu đề cột)
+    $('.sortable a').on('click', function(e) {
+        e.preventDefault();
+        const th = $(this).closest('th');
+        const newSortField = th.data('sort');
+        let newSortDir = 'asc';
+
+        const currentSort = $('#sort-field').val();
+        const currentDir = $('#sort-direction').val();
+
+        if (currentSort === newSortField) {
+            // Đảo hướng sắp xếp nếu click lại cùng cột
+            newSortDir = (currentDir === 'asc' ? 'desc' : 'asc');
+        } else {
+            // Mặc định sắp xếp tăng dần cho cột mới
+            newSortDir = 'asc';
+        }
+
+        // Cập nhật hidden inputs
+        $('#sort-field').val(newSortField);
+        $('#sort-direction').val(newSortDir);
+
+        // Load lại dữ liệu
+        loadResults(1, newSortField, newSortDir);
+    });
+
+});
+</script>
+{% endblock extra_js %}
+{% endblock content %}

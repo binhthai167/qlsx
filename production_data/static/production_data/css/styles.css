@@ -1,14 +1,14 @@
 body {
     font-family: "Segoe UI", Arial, sans-serif;
     margin: 0;
-    background-color: #464948;
+    background-color: #34495e;
     color: #333;
     line-height: 1.5;
 }
 
 /* ===== Header ===== */
 .header {
-    background-color: #464948;
+    background-color: #34495e;
     color: white;
     padding: 15px 20px;
     display: flex;
@@ -45,7 +45,7 @@ body {
 .sidebar {
     position: fixed;
     width: 100px;
-    background-color: #464948;
+    background-color: #34495e;
     padding: 10px;
     box-shadow: 2px 0 6px rgba(0,0,0,0.05);
 }
@@ -80,7 +80,7 @@ body {
     margin-left: 100px; /* Bù cho chiều rộng sidebar (120px) + khoảng trống 20px */
     margin-right: auto; /* Giữ căn phải để giới hạn max-width */
     z-index: 1; /* Đảm bảo nội dung chính ở dưới sidebar */
-    background-color: #464948;
+    background-color: #34495e;
 }
 /* ===== Card ===== */
 .card {
@@ -102,6 +102,20 @@ body {
 /* ===== Forms ===== */
 .form-group {
     margin-bottom: 10px;
+    margin-right: 20px;
+}
+.form-row {
+  display: flex;
+  gap: 20px; /* khoảng cách giữa các cột */
+}
+
+.form-group {
+  flex: 1; /* chia đều độ rộng */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
 }
 label {
     display: block;

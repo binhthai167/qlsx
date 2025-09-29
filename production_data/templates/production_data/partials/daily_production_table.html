@@ -1,0 +1,56 @@
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Ngày</th>
+            <th>PC Plan (Tổng)</th>
+            <th>PRO Plan (Tổng)</th>
+            <th>Result (Tổng)</th>
+            <th>Chênh lệch PC (Tổng)</th>
+            <th>Chênh lệch PRO (Tổng)</th>
+            <th>Tỷ lệ thành tích(%)</th>
+            <th>HOUR PC PLAN(Tổng)</th>
+            <th>HOUR PRO PLAN(Tổng)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in daily_production_summary %}
+        <tr>
+            <td>{{ item.date|date:"d/m/Y" }}</td>
+            <td>{{ item.total_pc_plan|default:0 }}</td>
+            <td>{{ item.total_pro_plan|default:0 }}</td>
+            <td>{{ item.total_result|default:0 }}</td>
+            <td>{{ item.total_pc_diff|default:0 }}</td>
+            <td>{{ item.total_prod_diff|default:0 }}</td>
+            <td class=" {% if item.avg_completion_rate >= 100 %} rate-high {% elif item.avg_completion_rate >= 80 %} rate-medium {% else %} rate-low {% endif %} ">
+                {{ item.avg_completion_rate|floatformat:2|default:"N/A" }}%
+            </td>
+            <td>{{ item.total_hour_pc_plan|default:0 }}</td>
+            <td>{{ item.total_hour_pro_plan|default:0 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9">Không có dữ liệu.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {% with current_obj=daily_production_summary table_id="tableProdByDate" %}
+        {% if current_obj.has_previous %}
+        <a href="#" class="page-link" data-page="1" data-table="{{ table_id }}">&laquo;</a>
+        <a href="#" class="page-link" data-page="{{ current_obj.previous_page_number }}" data-table="{{ table_id }}">‹</a>
+        {% endif %}
+
+        {% for num in current_obj.paginator.page_range %}
+            {% if current_obj.number == num %}
+                <span class="current">{{ num }}</span>
+            {% elif num > current_obj.number|add:'-3' and num < current_obj.number|add:'3' %}
+                <a href="#" class="page-link" data-page="{{ num }}" data-table="{{ table_id }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if current_obj.has_next %}
+        <a href="#" class="page-link" data-page="{{ current_obj.next_page_number }}" data-table="{{ table_id }}">›</a>
+        <a href="#" class="page-link" data-page="{{ current_obj.paginator.num_pages }}" data-table="{{ table_id }}">&raquo;</a>
+        {% endif %}
+    {% endwith %}
+</div>
