@@ -17,7 +17,7 @@
                     {% if form.date.errors %}<ul class="errorlist">{{ form.date.errors }}</ul>{% endif %}
                 </div>
             <div class="form-group">
-                <label>Người nhập liệu:</label>
+                <label>Người đang thao tác:</label>
                 <input type="text" value="{{ request.user.username }}" class="form-control" readonly>
             </div>
             </div>

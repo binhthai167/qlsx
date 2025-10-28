@@ -40,8 +40,7 @@
         <aside class="sidebar">
             {% include 'production_data/includes/sidebar.html' %}
         </aside>
-
-        <main class="content">
+       <main class="content">
             {% include 'production_data/includes/messages.html' %}
             {% block content %}
             <!-- Content will be injected here -->
@@ -52,69 +51,9 @@
     <!-- Các script bổ sung sẽ được chèn vào đây -->
     {% endblock %}
 </body>
-<style>
-.user-info {
-    position: relative;
-    display: inline-block;
-}
-
-.avatar {
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    object-fit: cover;
-    vertical-align: middle;
-}
-
-.dropbtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.arrow {
-    font-size: 12px;
-    color: #333;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    background-color: #fff;
-    min-width: 120px;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    z-index: 1000;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.dropdown-content .dropdown-item {
-    width: 100%;
-    padding: 10px;
-    text-align: left;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #333;
-}
-
-.dropdown-content .dropdown-item:hover {
-    background-color: #f0f0f0;
-}
-
-/* Khi có class show thì hiển thị */
-.dropdown-content.show {
-    display: block;
-}
-.dropdown-item a {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    width: 100%;
-}
-</style>
+<footer>
+    <div class="footer-content">
+    <p>&copy; 2025 Quản Lý Dây Chuyền Sản Xuất. All rights reserved.</p>
+    </div>
+</footer>
 </html>

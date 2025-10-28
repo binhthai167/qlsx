@@ -118,6 +118,11 @@ class ProductionResult(models.Model):
                 self.completion_rate = (self.result / self.pc_plan) * 100
             else:
                 self.completion_rate = 0.00 # Tránh chia cho 0
+        if self.completion_rate:
+            if self.completion_rate >= 100:
+                self.to_assess = 'O'
+            else:
+                self.to_assess = 'X'
         super().save(*args, **kwargs)
 
 class Profile(models.Model):

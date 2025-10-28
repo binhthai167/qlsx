@@ -7,7 +7,7 @@ from .models import Profile
 class ProductionResultForm(forms.ModelForm):
     group_model = forms.ModelChoiceField(
         queryset=ProductGroup.objects.all(),
-        required=False,
+        required=True,
         label="Nhóm Model",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -25,11 +25,11 @@ class ProductionResultForm(forms.ModelForm):
             'completion_rate': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'readonly': 'readonly',
-                'step': '0.01'
+                'step': '0.1'
             }),
-            'hour_pc_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'hour_pro_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'hour_actual': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'hour_pc_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '1'}),
+            'hour_pro_plan': forms.NumberInput(attrs={'class': 'form-control', 'step': '1'}),
+            'hour_actual': forms.NumberInput(attrs={'class': 'form-control', 'step': '1'}),
             'qty_hour': forms.NumberInput(attrs={'class': 'form-control'}),
             'po_plan_ref': forms.NumberInput(attrs={'class': 'form-control'}),
             'pc_plan_ref_2': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -50,6 +50,7 @@ class ProductionResultForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['product_model'].queryset = ProductModel.objects.none()
+        self.fields['product_model'].required = True
         if self.instance and self.instance.product_model:
             pm = self.instance.product_model
             if pm.group_model:

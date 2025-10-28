@@ -25,8 +25,6 @@ from .forms import ProfileForm, UserUpdateForm
 from django.contrib.auth import update_session_auth_hash
 
 
-
-
 def signup_view(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
@@ -45,7 +43,7 @@ def load_product_models(request):
     qs = ProductModel.objects.filter(group_model_id=group_id).order_by('code')
     data = list(qs.values('id', 'code', 'name'))
     return JsonResponse(data, safe=False)
-
+@login_required
 def data_entry_view(request):
     if request.method == 'POST':
         form = ProductionResultForm(request.POST, user=request.user)  # Truyền user hiện tại vào form
@@ -99,7 +97,7 @@ def production_results_list(request):
 
     # 4. Phân trang
     # Giữ số mục trên mỗi trang là 1
-    paginator = Paginator(results, 1) # Đặt lại là 10 mục mỗi trang cho thực tế hơn
+    paginator = Paginator(results, 20) # Đặt lại là 10 mục mỗi trang cho thực tế hơn
 
     try:
         results_page = paginator.page(page_number)
@@ -385,7 +383,6 @@ def production_report(request):
         'production_by_group_model_summary': group_paginator.page(1),
         'grand_totals': grand_totals,
         
-
 
         # Dữ liệu cho Chart.js
         'chart_dates': json.dumps(dates),

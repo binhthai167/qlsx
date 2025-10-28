@@ -1,7 +1,7 @@
 {% for result in results %}
     <tr>
         <td>{{ result.date |date:"d/m/Y" }}</td>
-        <td>{{ result.product_model.code }}</td> {# Giả định bạn truy cập code #}
+        <td class="highlight"> <a href="{% url 'production_result_detail' pk=result.pk %}">{{ result.product_model.code }} </a></td>
         <td>{{ result.pc_plan }}</td>
         <td>{{ result.pro_plan }}</td>
         <td>{{ result.result }}</td>
@@ -45,9 +45,9 @@
         <td>{{ result.person_actual }}</td>
         <td>{{ result.person_diff }}</td>
         <td>
-            <a href="{% url 'production_result_detail' result.pk %}" class="btn btn-info btn-sm">Xem</a>
-            <a href="{% url 'production_result_update' result.pk %}" class="btn btn-warning btn-sm">Sửa</a>
-            <a href="{% url 'production_result_delete' result.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+            <a href="{% url 'production_result_detail' result.pk %}" class="">👁️</a>
+            <a href="{% url 'production_result_update' result.pk %}" class="">✏️</a>
+            <a href="{% url 'production_result_delete' result.pk %}" class="">🗑️</a>
         </td>
     </tr>
 {% empty %}
